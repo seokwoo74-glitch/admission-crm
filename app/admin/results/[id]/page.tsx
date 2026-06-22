@@ -256,7 +256,7 @@ export default function ResultPage() {
 
             <div className="rounded-3xl bg-white/15 px-6 py-5 text-right backdrop-blur">
               <p className="text-sm font-bold opacity-90">상담 학생</p>
-              <p className="mt-2 text-3xl font-black">
+              <p className="mt-2 text-2xl font-black">
                 {record.student_name}
               </p>
               <p className="mt-1 text-sm font-bold opacity-90">

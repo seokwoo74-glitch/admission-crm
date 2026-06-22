@@ -45,14 +45,7 @@ export default function AdminPage() {
   const [selected, setSelected] = useState<Application | null>(null);
   const [keyword, setKeyword] = useState("");
 
-  useEffect(() => {
-    const ok = localStorage.getItem("admin_login_ok");
-    if (ok === "true") {
-      setLoggedIn(true);
-      loadData();
-    }
-  }, []);
-
+ 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     setLoginError("");
@@ -69,7 +62,6 @@ export default function AdminPage() {
         return;
       }
 
-      localStorage.setItem("admin_login_ok", "true");
       setLoggedIn(true);
       loadData();
     } catch (err) {
