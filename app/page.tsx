@@ -127,6 +127,28 @@ export default function Home() {
   );
 }
 
+async function loadAdmissions(index: number, university: string) {
+  const { data, error } = await supabase
+    .from("admission_db")
+    .select("admission_type")
+    .eq("university", university);
+
+  if (error) {
+    console.error(error);
+    return;
+  }
+
+  const list = [
+    ...new Set((data || []).map((row) => row.admission_type).filter(Boolean)),
+  ].sort();
+
+  setAdmissionOptions((prev) => {
+    const next = [...prev];
+    next[index] = list;
+    return next;
+  });
+}
+
   async function loadTracks(index: number, university: string, admission: string) {
     const { data } = await supabase
       .from("admission_db")
