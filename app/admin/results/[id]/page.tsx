@@ -204,6 +204,23 @@ export default function ResultPage() {
 
   return (
     <main className="min-h-screen bg-[#f5f7f8] px-4 py-6 print:bg-white print:p-0">
+<style jsx global>{`
+      @media print {
+        * {
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+        }
+
+        body {
+          background: white !important;
+        }
+
+        @page {
+          size: A4;
+          margin: 10mm;
+        }
+      }
+    `}</style>
       <div className="mx-auto mb-5 flex max-w-5xl justify-between print:hidden">
         <button
           type="button"
