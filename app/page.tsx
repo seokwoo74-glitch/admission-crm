@@ -340,7 +340,7 @@ async function loadAdmissions(index: number, university: string) {
           </h1>
 
           <p className="mt-4 max-w-3xl text-lg text-slate-200">
-            학생의 내신, 모의고사, 희망대학 정보를 바탕으로 맞춤형 수시 지원전략을 설계합니다.
+            학생의 맞춤형 수시 지원전략을 설계합니다.
           </p>
 
           
@@ -369,7 +369,7 @@ async function loadAdmissions(index: number, university: string) {
               <Select label="수능대비" value={csatPlan} onChange={setCsatPlan} options={["전과목대비(논술/정시)", "수능최저만 관리", "수능대비 안한다"]} />
               <Select label="3-1 기말 후 최우선 순위" value={priorityAfterFinal} onChange={setPriorityAfterFinal} options={["생기부관리", "수능대비", "논술대비", "면접대비"]} />
               <Select label="수시/정시 전략" value={strategyType} onChange={setStrategyType} options={["수시에 끝낸다", "정시까지 고려한다"]} />
-              <Input label="2차 전화상담 희망일" value={preferredCallDate} onChange={setPreferredCallDate} placeholder="예: 9월 4일 오후" />
+              <Input label="2차 전화상담 희망일" value={preferredCallDate} onChange={setPreferredCallDate} placeholder="9월 4일 5일 6일 중 택1" />
             </div>
           </Section>
 
