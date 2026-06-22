@@ -259,8 +259,7 @@ export default function ResultPage() {
                 결과 보고서
               </h1>
               <p className="mt-5 max-w-xl text-sm font-semibold leading-7 opacity-95">
-                학생의 현재 위치, 목표 성적, 희망 대학, 상담 내용을 바탕으로
-                작성된 맞춤형 입시 전략 리포트입니다.
+                학생의 맞춤형 입시 전략 리포트입니다.
               </p>
             </div>
 
@@ -288,8 +287,8 @@ export default function ResultPage() {
 
         <div className="space-y-7 p-8 print:p-5">
           <SectionTitle
-            title="학생 현재 위치"
-            desc="기본 정보와 입시 준비 방향을 한눈에 정리했습니다."
+            title="학생 정보"
+            desc="information"
           />
 
           <div className="grid grid-cols-3 gap-3 print:grid-cols-3">
