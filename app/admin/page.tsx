@@ -22,6 +22,7 @@ type Application = {
   admission_type?: string;
   strategy_type?: string;
   question?: string;
+  desired_universities?: any;
 };
 
 type RecordItem = {
@@ -123,6 +124,20 @@ export default function AdminPage() {
     if (!q) return applications;
 
     return applications.filter((a) => {
+      const universities = safeArr(a.desired_universities)
+        .map((u: any) =>
+          [
+            u.university,
+            u.admission,
+            u.admission_type,
+            u.track,
+            u.department,
+          ]
+            .filter(Boolean)
+            .join(" ")
+        )
+        .join(" ");
+
       return [
         a.student_name,
         a.school,
@@ -131,6 +146,7 @@ export default function AdminPage() {
         a.hope_major,
         a.admission_type,
         a.strategy_type,
+        universities,
       ]
         .filter(Boolean)
         .join(" ")
@@ -242,7 +258,7 @@ export default function AdminPage() {
             <input
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
-              placeholder="학생명, 학교, 전형 검색"
+              placeholder="학생명, 학교, 대학, 전형 검색"
               className="mb-4 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-blue-400 focus:bg-white"
             />
 
@@ -259,6 +275,7 @@ export default function AdminPage() {
                 filtered.map((item) => {
                   const done = !!recordMap[item.id];
                   const active = selected?.id === item.id;
+                  const universities = safeArr(item.desired_universities);
 
                   return (
                     <button
@@ -303,6 +320,16 @@ export default function AdminPage() {
                         <SmallBadge>{item.admission_type || "전형 없음"}</SmallBadge>
                         <SmallBadge>{item.strategy_type || "전략 없음"}</SmallBadge>
                       </div>
+
+                      {universities.length > 0 && (
+                        <p className="mt-3 line-clamp-1 text-xs font-bold text-blue-700">
+                          희망대학:{" "}
+                          {universities
+                            .map((u: any) => u.university)
+                            .filter(Boolean)
+                            .join(", ")}
+                        </p>
+                      )}
                     </button>
                   );
                 })
@@ -374,6 +401,8 @@ export default function AdminPage() {
                   <InfoCard label="수시/정시 전략" value={selected.strategy_type} />
                 </section>
 
+                <UniversityBox universities={selected.desired_universities} />
+
                 <section className="mt-6 rounded-3xl border border-slate-200 bg-slate-50 p-5">
                   <h3 className="mb-3 text-lg font-black text-slate-900">
                     상담 질문
@@ -401,6 +430,60 @@ export default function AdminPage() {
   );
 }
 
+function UniversityBox({ universities }: { universities: any }) {
+  const list = safeArr(universities);
+
+  return (
+    <section className="mt-6 rounded-3xl border border-slate-200 bg-white p-5">
+      <div className="mb-4 flex items-center justify-between">
+        <h3 className="text-lg font-black text-slate-900">희망 대학</h3>
+        <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-black text-blue-700">
+          {list.length}개
+        </span>
+      </div>
+
+      {list.length === 0 ? (
+        <p className="text-sm text-slate-500">등록된 희망 대학이 없습니다.</p>
+      ) : (
+        <div className="overflow-hidden rounded-2xl border border-slate-200">
+          <table className="w-full text-sm">
+            <thead className="bg-slate-100 text-slate-700">
+              <tr>
+                <th className="border border-slate-200 px-3 py-2">번호</th>
+                <th className="border border-slate-200 px-3 py-2">대학</th>
+                <th className="border border-slate-200 px-3 py-2">전형</th>
+                <th className="border border-slate-200 px-3 py-2">계열</th>
+                <th className="border border-slate-200 px-3 py-2">모집단위</th>
+              </tr>
+            </thead>
+            <tbody>
+              {list.map((u: any, i: number) => (
+                <tr key={i} className="text-center">
+                  <td className="border border-slate-200 px-3 py-2 text-slate-500">
+                    {i + 1}
+                  </td>
+                  <td className="border border-slate-200 px-3 py-2 font-black text-slate-900">
+                    {u.university || "-"}
+                  </td>
+                  <td className="border border-slate-200 px-3 py-2">
+                    {u.admission || u.admission_type || "-"}
+                  </td>
+                  <td className="border border-slate-200 px-3 py-2">
+                    {u.track || "-"}
+                  </td>
+                  <td className="border border-slate-200 px-3 py-2">
+                    {u.department || "-"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
+  );
+}
+
 function StatCard({
   title,
   value,
@@ -423,9 +506,7 @@ function InfoCard({ label, value }: { label: string; value: any }) {
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-4">
       <p className="text-xs font-bold text-slate-400">{label}</p>
-      <p className="mt-2 text-lg font-black text-slate-900">
-        {value || "-"}
-      </p>
+      <p className="mt-2 text-lg font-black text-slate-900">{value || "-"}</p>
     </div>
   );
 }
@@ -444,4 +525,16 @@ function formatDate(date: string) {
     month: "2-digit",
     day: "2-digit",
   });
+}
+
+function safeArr(value: any) {
+  if (!value) return [];
+  if (Array.isArray(value)) return value;
+
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
 }

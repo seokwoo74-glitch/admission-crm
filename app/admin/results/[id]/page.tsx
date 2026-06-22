@@ -35,7 +35,6 @@ type RecordData = {
   strategy_type?: string;
   question?: string;
   memo?: string;
-  june_scores?: any;
   september_scores?: any;
   november_scores?: any;
   universities?: any;
@@ -127,57 +126,6 @@ function normalizeScores(raw: any): ScoreItem[] {
   }));
 }
 
-function ScoreTable({
-  title,
-  scores,
-}: {
-  title: string;
-  scores: ScoreItem[];
-}) {
-  if (!scores.length) return null;
-
-  return (
-    <section className="mt-8 break-inside-avoid">
-      <h2 className="mb-3 text-xl font-bold text-slate-900">{title}</h2>
-
-      <div className="overflow-hidden rounded-xl border border-slate-200">
-        <table className="w-full border-collapse text-sm">
-          <thead className="bg-slate-100 text-slate-700">
-            <tr>
-              <th className="border border-slate-200 px-3 py-2">과목</th>
-              <th className="border border-slate-200 px-3 py-2">선택과목</th>
-              <th className="border border-slate-200 px-3 py-2">원점수</th>
-              <th className="border border-slate-200 px-3 py-2">백분위</th>
-              <th className="border border-slate-200 px-3 py-2">등급</th>
-            </tr>
-          </thead>
-          <tbody>
-            {scores.map((s, i) => (
-              <tr key={i} className="text-center">
-                <td className="border border-slate-200 px-3 py-2 font-semibold">
-                  {showValue(s.subject)}
-                </td>
-                <td className="border border-slate-200 px-3 py-2">
-                  {showValue(s.choice)}
-                </td>
-                <td className="border border-slate-200 px-3 py-2">
-                  {showValue(s.score)}
-                </td>
-                <td className="border border-slate-200 px-3 py-2">
-                  {showValue(s.percentile)}
-                </td>
-                <td className="border border-slate-200 px-3 py-2">
-                  {showValue(s.grade)}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </section>
-  );
-}
-
 export default function ResultPage() {
   const params = useParams();
   const router = useRouter();
@@ -228,9 +176,7 @@ export default function ResultPage() {
     if (!loading && record && typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
       if (params.get("print") === "1") {
-        setTimeout(() => {
-          window.print();
-        }, 500);
+        setTimeout(() => window.print(), 500);
       }
     }
   }, [loading, record]);
@@ -242,27 +188,27 @@ export default function ResultPage() {
 
   if (loading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-slate-100">
-        <p className="text-slate-600">불러오는 중...</p>
+      <main className="flex min-h-screen items-center justify-center bg-[#f5f7f8]">
+        <p className="font-bold text-slate-500">불러오는 중...</p>
       </main>
     );
   }
 
   if (!record) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-slate-100">
-        <p className="text-slate-600">상담 결과가 없습니다.</p>
+      <main className="flex min-h-screen items-center justify-center bg-[#f5f7f8]">
+        <p className="font-bold text-slate-500">상담 결과가 없습니다.</p>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-slate-100 px-4 py-8 print:bg-white print:p-0">
-      <div className="mx-auto mb-4 flex max-w-4xl justify-between print:hidden">
+    <main className="min-h-screen bg-[#f5f7f8] px-4 py-6 print:bg-white print:p-0">
+      <div className="mx-auto mb-5 flex max-w-5xl justify-between print:hidden">
         <button
           type="button"
           onClick={() => router.back()}
-          className="rounded-lg bg-slate-700 px-4 py-2 text-sm font-semibold text-white"
+          className="rounded-2xl border border-slate-300 bg-white px-5 py-3 text-sm font-black text-slate-700 shadow-sm"
         >
           뒤로가기
         </button>
@@ -270,158 +216,259 @@ export default function ResultPage() {
         <button
           type="button"
           onClick={openPrintPage}
-          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white"
+          className="rounded-2xl bg-[#03c75a] px-6 py-3 text-sm font-black text-white shadow-sm"
         >
           PDF 저장하기
         </button>
       </div>
 
-      <div className="mx-auto max-w-4xl rounded-2xl bg-white p-8 shadow print:max-w-none print:rounded-none print:p-6 print:shadow-none">
-        <header className="border-b border-slate-200 pb-6">
-          <p className="text-sm font-semibold text-blue-600">
-            강성재교육연구소 AI 입시 CRM
-          </p>
-          <h1 className="mt-2 text-3xl font-black text-slate-900">
-            입시 상담 결과 보고서
-          </h1>
-          <p className="mt-2 text-sm text-slate-500">
-            저장일: {new Date(record.created_at).toLocaleDateString("ko-KR")}
-          </p>
-        </header>
+      <div className="mx-auto max-w-5xl overflow-hidden rounded-[28px] bg-white shadow-sm print:max-w-none print:rounded-none print:shadow-none">
+        <section className="bg-[#03c75a] px-10 py-10 text-white print:px-8 print:py-8">
+          <div className="flex items-start justify-between gap-6">
+            <div>
+              <p className="text-sm font-black opacity-90">
+                강성재교육연구소 AI 입시 CRM
+              </p>
+              <h1 className="mt-3 text-4xl font-black tracking-tight">
+                입시 상담 결과 보고서
+              </h1>
+              <p className="mt-4 text-sm font-semibold opacity-90">
+                학생의 현재 위치와 목표 성적, 지원 희망 대학을 바탕으로 작성된 상담 참고 자료입니다.
+              </p>
+            </div>
 
-        <section className="mt-8 grid grid-cols-2 gap-3 text-sm">
-          <Info label="학생 이름" value={record.student_name} />
-          <Info label="학교" value={record.school} />
-          <Info label="학년" value={record.grade || record.student_grade} />
-          <Info label="계열" value={record.track} />
-          <Info label="전교과 내신" value={record.overall_gpa} />
-          <Info label="주요교과 내신" value={record.major_gpa} />
-          <Info label="전교 등수" value={record.class_rank} />
-          <Info label="주력 전형" value={record.admission_type} />
-          <Info label="비교과 관리" value={record.extracurricular_needed} />
-          <Info label="수능 대비" value={record.csat_plan} />
-          <Info label="최우선 순위" value={record.priority_after_final} />
-          <Info label="수시/정시 전략" value={record.strategy_type} />
+            <div className="rounded-3xl bg-white/15 px-6 py-5 text-right backdrop-blur">
+              <p className="text-sm font-bold opacity-90">상담 학생</p>
+              <p className="mt-2 text-3xl font-black">
+                {record.student_name}
+              </p>
+              <p className="mt-1 text-sm font-bold opacity-90">
+                {record.school} · {record.grade || record.student_grade}
+              </p>
+            </div>
+          </div>
         </section>
 
-        {record.question && (
-          <section className="mt-8">
-            <h2 className="mb-3 text-xl font-bold text-slate-900">
-              상담 질문
-            </h2>
-            <div className="rounded-xl bg-slate-50 p-4 text-sm leading-7 text-slate-700">
-              {record.question}
+        <section className="grid grid-cols-1 gap-4 border-b border-slate-100 bg-white p-8 md:grid-cols-4 print:grid-cols-4 print:p-6">
+          <TopInfo label="계열" value={record.track} />
+          <TopInfo label="전교과 내신" value={record.overall_gpa} />
+          <TopInfo label="주요교과 내신" value={record.major_gpa} />
+          <TopInfo label="주력 전형" value={record.admission_type} />
+        </section>
+
+        <div className="space-y-7 p-8 print:p-6">
+          <ReportCard
+            number="01"
+            title="학생 기본 정보"
+            desc="상담 신청서 기준 기본 프로필입니다."
+          >
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-3 print:grid-cols-3">
+              <Info label="학생 이름" value={record.student_name} />
+              <Info label="학교" value={record.school} />
+              <Info label="학년" value={record.grade || record.student_grade} />
+              <Info label="계열" value={record.track} />
+              <Info label="전교과 내신" value={record.overall_gpa} />
+              <Info label="주요교과 내신" value={record.major_gpa} />
+              <Info label="전교 등수" value={record.class_rank} />
+              <Info label="비교과 관리" value={record.extracurricular_needed} />
+              <Info label="수능 대비" value={record.csat_plan} />
+              <Info label="최우선 순위" value={record.priority_after_final} />
+              <Info label="수시/정시 전략" value={record.strategy_type} />
+              <Info label="상담 저장일" value={new Date(record.created_at).toLocaleDateString("ko-KR")} />
             </div>
-          </section>
-        )}
+          </ReportCard>
 
-        {record.memo && (
-          <section className="mt-8">
-            <h2 className="mb-3 text-xl font-bold text-slate-900">
-              상담 메모
-            </h2>
-            <div className="whitespace-pre-wrap rounded-xl bg-slate-50 p-4 text-sm leading-7 text-slate-700">
-              {record.memo}
+          {record.question && (
+            <ReportCard number="02" title="상담 질문" desc="학생 또는 학부모가 남긴 핵심 질문입니다.">
+              <div className="whitespace-pre-wrap rounded-2xl bg-slate-50 p-5 text-sm font-medium leading-7 text-slate-700">
+                {record.question}
+              </div>
+            </ReportCard>
+          )}
+
+          <ReportCard number="03" title="목표 성적표" desc="PDF에는 9월 목표와 11월 수능 목표만 표시합니다.">
+            <div className="space-y-6">
+              <ScoreTable title="9월 모의고사 목표 성적표" scores={septemberScores} />
+              <ScoreTable title="11월 수능 목표 성적표" scores={novemberScores} />
             </div>
-          </section>
-        )}
+          </ReportCard>
 
-        <ScoreTable title="9월 모의고사 목표 성적표" scores={septemberScores} />
-        <ScoreTable title="11월 수능 목표 성적표" scores={novemberScores} />
-
-        {universities.length > 0 && (
-          <section className="mt-8 break-inside-avoid">
-            <h2 className="mb-3 text-xl font-bold text-slate-900">
-              지원 희망 대학
-            </h2>
-
-            <div className="overflow-hidden rounded-xl border border-slate-200">
-              <table className="w-full border-collapse text-sm">
-                <thead className="bg-slate-100 text-slate-700">
-                  <tr>
-                    <th className="border border-slate-200 px-3 py-2">대학</th>
-                    <th className="border border-slate-200 px-3 py-2">전형</th>
-                    <th className="border border-slate-200 px-3 py-2">계열</th>
-                    <th className="border border-slate-200 px-3 py-2">
-                      모집단위
-                    </th>
-                    <th className="border border-slate-200 px-3 py-2">
-                      특이사항
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {universities.map((u: any, i: number) => (
-                    <tr key={i} className="text-center">
-                      <td className="border border-slate-200 px-3 py-2">
-                        {showValue(u.university)}
-                      </td>
-                      <td className="border border-slate-200 px-3 py-2">
-                        {showValue(u.admission || u.admission_type)}
-                      </td>
-                      <td className="border border-slate-200 px-3 py-2">
-                        {showValue(u.track)}
-                      </td>
-                      <td className="border border-slate-200 px-3 py-2">
-                        {showValue(u.department)}
-                      </td>
-                      <td className="border border-slate-200 px-3 py-2 text-left">
-                        {showValue(u.point)}
-                      </td>
+          {universities.length > 0 && (
+            <ReportCard number="04" title="지원 희망 대학" desc="신청서 또는 상담 결과에 저장된 대학 목록입니다.">
+              <div className="overflow-hidden rounded-2xl border border-slate-200">
+                <table className="w-full border-collapse text-sm">
+                  <thead className="bg-[#f0fff7] text-slate-700">
+                    <tr>
+                      <th className="border border-slate-200 px-3 py-3">번호</th>
+                      <th className="border border-slate-200 px-3 py-3">대학</th>
+                      <th className="border border-slate-200 px-3 py-3">전형</th>
+                      <th className="border border-slate-200 px-3 py-3">계열</th>
+                      <th className="border border-slate-200 px-3 py-3">모집단위</th>
+                      <th className="border border-slate-200 px-3 py-3">특이사항</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
-        )}
+                  </thead>
+                  <tbody>
+                    {universities.map((u: any, i: number) => (
+                      <tr key={i} className="text-center">
+                        <td className="border border-slate-200 px-3 py-3 text-slate-500">
+                          {i + 1}
+                        </td>
+                        <td className="border border-slate-200 px-3 py-3 font-black text-slate-900">
+                          {showValue(u.university)}
+                        </td>
+                        <td className="border border-slate-200 px-3 py-3">
+                          {showValue(u.admission || u.admission_type)}
+                        </td>
+                        <td className="border border-slate-200 px-3 py-3">
+                          {showValue(u.track)}
+                        </td>
+                        <td className="border border-slate-200 px-3 py-3">
+                          {showValue(u.department)}
+                        </td>
+                        <td className="border border-slate-200 px-3 py-3 text-left">
+                          {showValue(u.point)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </ReportCard>
+          )}
 
-        {record.ai_comment && (
-          <section className="mt-8">
-            <h2 className="mb-3 text-xl font-bold text-slate-900">
-              AI 종합 코멘트
-            </h2>
-            <div className="whitespace-pre-wrap rounded-xl bg-blue-50 p-4 text-sm leading-7 text-slate-800">
-              {record.ai_comment}
-            </div>
-          </section>
-        )}
+          {record.memo && (
+            <ReportCard number="05" title="최종 상담 메모" desc="상담자가 작성한 최종 코멘트입니다.">
+              <div className="whitespace-pre-wrap rounded-2xl border border-[#b7efce] bg-[#f0fff7] p-5 text-sm font-medium leading-8 text-slate-800">
+                {record.memo}
+              </div>
+            </ReportCard>
+          )}
 
-        {record.ai_recommendation && (
-          <section className="mt-8">
-            <h2 className="mb-3 text-xl font-bold text-slate-900">
-              추천 전략
-            </h2>
-            <div className="whitespace-pre-wrap rounded-xl bg-emerald-50 p-4 text-sm leading-7 text-slate-800">
-              {record.ai_recommendation}
-            </div>
-          </section>
-        )}
+          {record.ai_comment && (
+            <ReportCard number="AI" title="AI 종합 코멘트" desc="AI 분석 결과입니다.">
+              <div className="whitespace-pre-wrap rounded-2xl bg-blue-50 p-5 text-sm leading-8 text-slate-800">
+                {record.ai_comment}
+              </div>
+            </ReportCard>
+          )}
 
-        {record.ai_university_analysis && (
-          <section className="mt-8">
-            <h2 className="mb-3 text-xl font-bold text-slate-900">
-              대학별 분석
-            </h2>
-            <div className="whitespace-pre-wrap rounded-xl bg-amber-50 p-4 text-sm leading-7 text-slate-800">
-              {record.ai_university_analysis}
-            </div>
-          </section>
-        )}
+          {record.ai_recommendation && (
+            <ReportCard number="AI" title="AI 추천 전략" desc="AI 추천 전략입니다.">
+              <div className="whitespace-pre-wrap rounded-2xl bg-emerald-50 p-5 text-sm leading-8 text-slate-800">
+                {record.ai_recommendation}
+              </div>
+            </ReportCard>
+          )}
 
-        <footer className="mt-12 border-t border-slate-200 pt-5 text-center text-xs text-slate-500">
-          본 자료는 강성재교육연구소 상담 참고용 자료입니다.
-        </footer>
+          {record.ai_university_analysis && (
+            <ReportCard number="AI" title="AI 대학별 분석" desc="AI 대학별 분석입니다.">
+              <div className="whitespace-pre-wrap rounded-2xl bg-amber-50 p-5 text-sm leading-8 text-slate-800">
+                {record.ai_university_analysis}
+              </div>
+            </ReportCard>
+          )}
+
+          <footer className="border-t border-slate-200 pt-6 text-center text-xs font-semibold text-slate-500">
+            본 자료는 강성재교육연구소 상담 참고용 자료이며, 최종 지원 판단은 학생의 실제 성적·학교별 모집요강·경쟁률 변동을 함께 고려해야 합니다.
+          </footer>
+        </div>
       </div>
     </main>
   );
 }
 
+function ReportCard({
+  number,
+  title,
+  desc,
+  children,
+}: {
+  number: string;
+  title: string;
+  desc: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="break-inside-avoid rounded-3xl border border-slate-200 bg-white p-6 shadow-sm print:rounded-2xl print:p-5 print:shadow-none">
+      <div className="mb-5 flex items-start gap-4">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#03c75a] text-sm font-black text-white">
+          {number}
+        </div>
+        <div>
+          <h2 className="text-xl font-black text-slate-900">{title}</h2>
+          <p className="mt-1 text-sm font-medium text-slate-500">{desc}</p>
+        </div>
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function ScoreTable({ title, scores }: { title: string; scores: ScoreItem[] }) {
+  if (!scores.length) {
+    return (
+      <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-5 text-center text-sm font-bold text-slate-400">
+        {title} 입력값이 없습니다.
+      </div>
+    );
+  }
+
+  return (
+    <div className="break-inside-avoid">
+      <h3 className="mb-3 text-lg font-black text-slate-900">{title}</h3>
+
+      <div className="overflow-hidden rounded-2xl border border-slate-200">
+        <table className="w-full border-collapse text-sm">
+          <thead className="bg-[#f0fff7] text-slate-700">
+            <tr>
+              <th className="border border-slate-200 px-3 py-3">과목</th>
+              <th className="border border-slate-200 px-3 py-3">선택과목</th>
+              <th className="border border-slate-200 px-3 py-3">원점수</th>
+              <th className="border border-slate-200 px-3 py-3">백분위</th>
+              <th className="border border-slate-200 px-3 py-3">등급</th>
+            </tr>
+          </thead>
+          <tbody>
+            {scores.map((s, i) => (
+              <tr key={i} className="text-center">
+                <td className="border border-slate-200 px-3 py-3 font-black text-slate-900">
+                  {showValue(s.subject)}
+                </td>
+                <td className="border border-slate-200 px-3 py-3">
+                  {showValue(s.choice)}
+                </td>
+                <td className="border border-slate-200 px-3 py-3">
+                  {showValue(s.score)}
+                </td>
+                <td className="border border-slate-200 px-3 py-3">
+                  {showValue(s.percentile)}
+                </td>
+                <td className="border border-slate-200 px-3 py-3 font-black text-[#03c75a]">
+                  {showValue(s.grade)}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function TopInfo({ label, value }: { label: string; value: any }) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+      <p className="text-xs font-black text-slate-400">{label}</p>
+      <p className="mt-2 text-xl font-black text-slate-900">{showValue(value)}</p>
+    </div>
+  );
+}
+
 function Info({ label, value }: { label: string; value: any }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-3">
-      <div className="text-xs font-semibold text-slate-500">{label}</div>
-      <div className="mt-1 font-bold text-slate-900">{showValue(value)}</div>
+    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+      <div className="text-xs font-black text-slate-400">{label}</div>
+      <div className="mt-2 font-black text-slate-900">{showValue(value)}</div>
     </div>
   );
 }
