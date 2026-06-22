@@ -111,42 +111,21 @@ export default function Home() {
   }, []);
 
  async function loadUniversities() {
-  const { data, error } = await supabase
-    .from("admission_db")
-    .select("university")
-    .not("university", "is", null)
-    .range(0, 5000);
+  const { data, error } = await supabase.rpc("get_unique_universities");
 
   if (error) {
-    alert("대학 목록 오류: " + error.message);
-    console.error(error);
+    console.error("대학 목록 불러오기 실패:", error);
+    alert("대학 목록 불러오기 실패: " + error.message);
     return;
   }
 
-  const list = [
-    ...new Set((data || []).map((row: any) => row.university).filter(Boolean)),
-  ].sort();
-
-  console.log("대학목록 개수:", list.length);
-  setUniversityOptions(list);
+  setUniversityOptions(
+    (data || [])
+      .map((row: any) => row.university)
+      .filter(Boolean)
+      .sort()
+  );
 }
-
-  async function loadAdmissions(index: number, university: string) {
-    const { data } = await supabase
-      .from("admission_db")
-      .select("admission_type")
-      .eq("university", university);
-
-    const list = [
-      ...new Set((data || []).map((row) => row.admission_type).filter(Boolean)),
-    ].sort();
-
-    setAdmissionOptions((prev) => {
-      const next = [...prev];
-      next[index] = list;
-      return next;
-    });
-  }
 
   async function loadTracks(index: number, university: string, admission: string) {
     const { data } = await supabase
