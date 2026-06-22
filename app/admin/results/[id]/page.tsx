@@ -1,199 +1,363 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
-import Link from "next/link";
-import { supabase } from "@/lib/supabase";
+import { useEffect, useMemo, useState } from "react";
+import { createClient } from "@supabase/supabase-js";
+import { useParams, useRouter } from "next/navigation";
 
-type UniversityItem = {
-  university: string;
-  admission: string;
-  track: string;
-  department: string;
-  quota?: string;
-  method?: string;
-  minimum_score?: string;
-  exam_date?: string;
-  competition_rate?: string;
-  cut_score?: string;
-  point?: string;
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
+
+type ScoreItem = {
+  subject?: string;
+  choice?: string;
+  score?: string | number;
+  percentile?: string | number;
+  grade?: string | number;
 };
 
-type RecordItem = {
+type RecordData = {
   id: string;
   created_at: string;
   student_name: string;
   school: string;
   grade: string;
-  class_rank: string;
-  admission_type: string;
-  extracurricular_needed: string;
-  csat_plan: string;
-  priority_after_final: string;
-  strategy_type: string;
-  question: string;
-  memo: string;
-  universities: UniversityItem[];
+  track?: string;
+  overall_gpa?: string | number;
+  major_gpa?: string | number;
+  class_rank?: string | number;
+  admission_type?: string;
+  extracurricular_needed?: string;
+  csat_plan?: string;
+  priority_after_final?: string;
+  strategy_type?: string;
+  question?: string;
+  memo?: string;
+  september_scores?: any;
+  november_scores?: any;
+  universities?: any;
+  ai_comment?: string;
+  ai_recommendation?: string;
+  ai_university_analysis?: string;
 };
+
+function safeParse(value: any) {
+  if (!value) return null;
+  if (typeof value === "object") return value;
+  try {
+    return JSON.parse(value);
+  } catch {
+    return null;
+  }
+}
+
+function normalizeScores(raw: any): ScoreItem[] {
+  const data = safeParse(raw);
+  if (!data) return [];
+
+  if (Array.isArray(data)) return data;
+
+  const labels: Record<string, string> = {
+    korean: "국어",
+    math: "수학",
+    english: "영어",
+    inquiry1: "탐구1",
+    inquiry2: "탐구2",
+    science1: "탐구1",
+    science2: "탐구2",
+    social1: "탐구1",
+    social2: "탐구2",
+  };
+
+  return Object.entries(data).map(([key, value]: any) => ({
+    subject: labels[key] || value?.subject || key,
+    choice: value?.choice || value?.select || value?.subject_choice || "",
+    score: value?.score ?? value?.raw ?? "",
+    percentile: value?.percentile ?? value?.percent ?? "",
+    grade: value?.grade ?? "",
+  }));
+}
+
+function ScoreTable({
+  title,
+  scores,
+}: {
+  title: string;
+  scores: ScoreItem[];
+}) {
+  if (!scores.length) return null;
+
+  return (
+    <section className="mt-8 break-inside-avoid">
+      <h2 className="mb-3 text-xl font-bold text-slate-900">{title}</h2>
+
+      <div className="overflow-hidden rounded-xl border border-slate-200">
+        <table className="w-full border-collapse text-sm">
+          <thead className="bg-slate-100 text-slate-700">
+            <tr>
+              <th className="border border-slate-200 px-3 py-2">과목</th>
+              <th className="border border-slate-200 px-3 py-2">선택과목</th>
+              <th className="border border-slate-200 px-3 py-2">원점수</th>
+              <th className="border border-slate-200 px-3 py-2">백분위</th>
+              <th className="border border-slate-200 px-3 py-2">등급</th>
+            </tr>
+          </thead>
+          <tbody>
+            {scores.map((s, i) => (
+              <tr key={i} className="text-center">
+                <td className="border border-slate-200 px-3 py-2 font-semibold">
+                  {s.subject || "-"}
+                </td>
+                <td className="border border-slate-200 px-3 py-2">
+                  {s.choice || "-"}
+                </td>
+                <td className="border border-slate-200 px-3 py-2">
+                  {s.score || "-"}
+                </td>
+                <td className="border border-slate-200 px-3 py-2">
+                  {s.percentile || "-"}
+                </td>
+                <td className="border border-slate-200 px-3 py-2">
+                  {s.grade || "-"}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
 
 export default function ResultPage() {
   const params = useParams();
+  const router = useRouter();
   const id = params.id as string;
 
-  const [record, setRecord] = useState<RecordItem | null>(null);
+  const [record, setRecord] = useState<RecordData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const septemberScores = useMemo(
+    () => normalizeScores(record?.september_scores),
+    [record]
+  );
+
+  const novemberScores = useMemo(
+    () => normalizeScores(record?.november_scores),
+    [record]
+  );
+
+  const universities = useMemo(() => {
+    const parsed = safeParse(record?.universities);
+    return Array.isArray(parsed) ? parsed : [];
+  }, [record]);
 
   useEffect(() => {
-    fetchRecord();
-  }, []);
+    async function fetchRecord() {
+      setLoading(true);
 
-async function fetchRecord() {
-  const { data, error } = await supabase
-    .from("consultation_records")
-    .select("*")
-    .eq("application_id", id)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+      const { data, error } = await supabase
+        .from("consultation_records")
+        .select("*")
+        .eq("id", id)
+        .single();
 
-  if (error) {
-    console.error(error);
-    alert("상담결과를 불러오지 못했습니다.");
-    return;
-  }
+      if (error) {
+        alert("상담 결과를 불러오지 못했습니다.");
+        console.error(error);
+      } else {
+        setRecord(data);
+      }
 
-  if (!data) {
-    alert("저장된 상담결과가 없습니다.");
-    return;
-  }
+      setLoading(false);
+    }
 
-  setRecord(data);
-}
+    if (id) fetchRecord();
+  }, [id]);
 
-  function printPdf() {
-    window.print();
+  if (loading) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-slate-100">
+        <p className="text-slate-600">불러오는 중...</p>
+      </main>
+    );
   }
 
   if (!record) {
-    return <main className="p-8">불러오는 중...</main>;
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-slate-100">
+        <p className="text-slate-600">상담 결과가 없습니다.</p>
+      </main>
+    );
   }
 
-  const filteredUniversities =
-    record.universities?.filter(
-      (item) =>
-        item.university || item.admission || item.track || item.department
-    ) || [];
-
   return (
-    <main className="min-h-screen bg-gray-100 p-6 print:bg-white print:p-0">
-      <div className="max-w-6xl mx-auto mb-4 flex justify-between print:hidden">
-        <Link href="/admin/results" className="text-blue-600">
-          ← 상담결과 목록
-        </Link>
+    <main className="min-h-screen bg-slate-100 px-4 py-8 print:bg-white print:p-0">
+      <div className="mx-auto mb-4 flex max-w-4xl justify-between print:hidden">
+        <button
+          onClick={() => router.back()}
+          className="rounded-lg bg-slate-700 px-4 py-2 text-sm font-semibold text-white"
+        >
+          뒤로가기
+        </button>
 
         <button
-          onClick={printPdf}
-          className="bg-black text-white px-5 py-2 rounded"
+          onClick={() => window.print()}
+          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white"
         >
-          PDF 저장
+          PDF 저장 / 인쇄
         </button>
       </div>
 
-      <section className="max-w-6xl mx-auto bg-white p-10 shadow rounded print:shadow-none print:rounded-none print:max-w-none">
-        <div className="text-center border-b pb-5 mb-6">
-          <p className="text-sm text-gray-500">강성재교육연구소</p>
-          <h1 className="text-3xl font-bold mt-2">수시지원전략(안)</h1>
-        </div>
+      <div className="mx-auto max-w-4xl rounded-2xl bg-white p-8 shadow print:max-w-none print:rounded-none print:shadow-none">
+        <header className="border-b border-slate-200 pb-6">
+          <p className="text-sm font-semibold text-blue-600">
+            강성재교육연구소 AI 입시 CRM
+          </p>
+          <h1 className="mt-2 text-3xl font-black text-slate-900">
+            입시 상담 결과 보고서
+          </h1>
+          <p className="mt-2 text-sm text-slate-500">
+            저장일: {new Date(record.created_at).toLocaleDateString("ko-KR")}
+          </p>
+        </header>
 
-        <div className="grid grid-cols-3 gap-3 text-sm mb-6">
-          <Info label="학생명" value={record.student_name} />
+        <section className="mt-8 grid grid-cols-2 gap-3 text-sm">
+          <Info label="학생 이름" value={record.student_name} />
           <Info label="학교" value={record.school} />
           <Info label="학년" value={record.grade} />
+          <Info label="계열" value={record.track} />
+          <Info label="전교과 내신" value={record.overall_gpa} />
+          <Info label="주요교과 내신" value={record.major_gpa} />
           <Info label="전교 등수" value={record.class_rank} />
-          <Info label="주력전형" value={record.admission_type} />
-          <Info label="수능대비" value={record.csat_plan} />
-          <Info label="생기부 관리" value={record.extracurricular_needed} />
-          <Info label="기말 후 우선순위" value={record.priority_after_final} />
-          <Info label="전략 방향" value={record.strategy_type} />
-        </div>
+          <Info label="주력 전형" value={record.admission_type} />
+          <Info label="비교과 관리" value={record.extracurricular_needed} />
+          <Info label="수능 대비" value={record.csat_plan} />
+          <Info label="최우선 순위" value={record.priority_after_final} />
+          <Info label="수시/정시 전략" value={record.strategy_type} />
+        </section>
 
-        <div className="mb-6">
-          <h2 className="font-bold border-b pb-2 mb-3">지원전략 대학 목록</h2>
+        {record.question && (
+          <section className="mt-8">
+            <h2 className="mb-3 text-xl font-bold text-slate-900">
+              상담 질문
+            </h2>
+            <div className="rounded-xl bg-slate-50 p-4 text-sm leading-7 text-slate-700">
+              {record.question}
+            </div>
+          </section>
+        )}
 
-          {filteredUniversities.length === 0 ? (
-            <p className="text-sm text-gray-500">입력된 지원대학이 없습니다.</p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full border text-xs">
-                <thead className="bg-gray-100">
+        {record.memo && (
+          <section className="mt-8">
+            <h2 className="mb-3 text-xl font-bold text-slate-900">
+              상담 메모
+            </h2>
+            <div className="rounded-xl bg-slate-50 p-4 text-sm leading-7 text-slate-700 whitespace-pre-wrap">
+              {record.memo}
+            </div>
+          </section>
+        )}
+
+        <ScoreTable title="9월 모의고사 목표 성적표" scores={septemberScores} />
+        <ScoreTable title="11월 수능 목표 성적표" scores={novemberScores} />
+
+        {universities.length > 0 && (
+          <section className="mt-8 break-inside-avoid">
+            <h2 className="mb-3 text-xl font-bold text-slate-900">
+              지원 희망 대학
+            </h2>
+
+            <div className="overflow-hidden rounded-xl border border-slate-200">
+              <table className="w-full border-collapse text-sm">
+                <thead className="bg-slate-100 text-slate-700">
                   <tr>
-                    <th className="border p-2 w-10">번호</th>
-                    <th className="border p-2">대학명</th>
-                    <th className="border p-2">전형명</th>
-                    <th className="border p-2">계열</th>
-                    <th className="border p-2">모집단위</th>
-                    <th className="border p-2">인원</th>
-                    <th className="border p-2">수능최저</th>
-                    <th className="border p-2">경쟁률</th>
-                    <th className="border p-2">70%컷</th>
+                    <th className="border border-slate-200 px-3 py-2">대학</th>
+                    <th className="border border-slate-200 px-3 py-2">전형</th>
+                    <th className="border border-slate-200 px-3 py-2">계열</th>
+                    <th className="border border-slate-200 px-3 py-2">
+                      모집단위
+                    </th>
+                    <th className="border border-slate-200 px-3 py-2">
+                      특이사항
+                    </th>
                   </tr>
                 </thead>
-
                 <tbody>
-                  {filteredUniversities.map((item, index) => (
-                    <tr key={index}>
-                      <td className="border p-2 text-center">{index + 1}</td>
-                      <td className="border p-2">{item.university || "-"}</td>
-                      <td className="border p-2">{item.admission || "-"}</td>
-                      <td className="border p-2">{item.track || "-"}</td>
-                      <td className="border p-2">{item.department || "-"}</td>
-                      <td className="border p-2 text-center">
-                        {item.quota || "-"}
+                  {universities.map((u: any, i: number) => (
+                    <tr key={i} className="text-center">
+                      <td className="border border-slate-200 px-3 py-2">
+                        {u.university || "-"}
                       </td>
-                      <td className="border p-2 whitespace-pre-wrap">
-                        {item.minimum_score || "-"}
+                      <td className="border border-slate-200 px-3 py-2">
+                        {u.admission || u.admission_type || "-"}
                       </td>
-                      <td className="border p-2 text-center">
-                        {item.competition_rate || "-"}
+                      <td className="border border-slate-200 px-3 py-2">
+                        {u.track || "-"}
                       </td>
-                      <td className="border p-2 text-center">
-                        {item.cut_score || "-"}
+                      <td className="border border-slate-200 px-3 py-2">
+                        {u.department || "-"}
+                      </td>
+                      <td className="border border-slate-200 px-3 py-2 text-left">
+                        {u.point || "-"}
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-          )}
-        </div>
+          </section>
+        )}
 
-        <div className="mb-6">
-          <h2 className="font-bold border-b pb-2 mb-3">상담 전 질문사항</h2>
-          <p className="text-sm whitespace-pre-wrap min-h-16">
-            {record.question || "-"}
-          </p>
-        </div>
+        {record.ai_comment && (
+          <section className="mt-8">
+            <h2 className="mb-3 text-xl font-bold text-slate-900">
+              AI 종합 코멘트
+            </h2>
+            <div className="rounded-xl bg-blue-50 p-4 text-sm leading-7 text-slate-800 whitespace-pre-wrap">
+              {record.ai_comment}
+            </div>
+          </section>
+        )}
 
-        <div className="mb-6">
-          <h2 className="font-bold border-b pb-2 mb-3">상담 메모</h2>
-          <p className="text-sm whitespace-pre-wrap min-h-24">
-            {record.memo || "-"}
-          </p>
-        </div>
+        {record.ai_recommendation && (
+          <section className="mt-8">
+            <h2 className="mb-3 text-xl font-bold text-slate-900">
+              추천 전략
+            </h2>
+            <div className="rounded-xl bg-emerald-50 p-4 text-sm leading-7 text-slate-800 whitespace-pre-wrap">
+              {record.ai_recommendation}
+            </div>
+          </section>
+        )}
 
-        <div className="border-t pt-4 text-xs text-gray-500">
-          ※ 상담 결과는 학생의 현재 성적, 학교생활기록부, 모의고사 결과,
-          희망 전형을 바탕으로 한 수시 지원전략 참고자료입니다.
-        </div>
-      </section>
+        {record.ai_university_analysis && (
+          <section className="mt-8">
+            <h2 className="mb-3 text-xl font-bold text-slate-900">
+              대학별 분석
+            </h2>
+            <div className="rounded-xl bg-amber-50 p-4 text-sm leading-7 text-slate-800 whitespace-pre-wrap">
+              {record.ai_university_analysis}
+            </div>
+          </section>
+        )}
+
+        <footer className="mt-12 border-t border-slate-200 pt-5 text-center text-xs text-slate-500">
+          본 자료는 강성재교육연구소 상담 참고용 자료입니다.
+        </footer>
+      </div>
     </main>
   );
 }
 
-function Info({ label, value }: { label: string; value?: string | null }) {
+function Info({ label, value }: { label: string; value: any }) {
   return (
-    <div className="border rounded p-3">
-      <div className="text-gray-500 text-xs mb-1">{label}</div>
-      <div className="font-semibold">{value || "-"}</div>
+    <div className="rounded-xl border border-slate-200 bg-white p-3">
+      <div className="text-xs font-semibold text-slate-500">{label}</div>
+      <div className="mt-1 font-bold text-slate-900">
+        {value !== undefined && value !== null && value !== "" ? value : "-"}
+      </div>
     </div>
   );
 }
