@@ -110,39 +110,24 @@ export default function Home() {
     loadUniversities();
   }, []);
 
-  async function loadUniversities() {
-  console.log("SUPABASE URL:", process.env.NEXT_PUBLIC_SUPABASE_URL);
-
+ async function loadUniversities() {
   const { data, error } = await supabase
     .from("admission_db")
     .select("university")
-    .limit(5);
-
-  console.log("대학 테스트 data:", data);
-  console.log("대학 테스트 error:", error);
+    .not("university", "is", null)
+    .range(0, 5000);
 
   if (error) {
     alert("대학 목록 오류: " + error.message);
-    return;
-  }
-
-  alert("대학 데이터 개수 테스트: " + (data?.length || 0));
-
-  const { data: allData, error: allError } = await supabase
-    .from("admission_db")
-    .select("university")
-    .not("university", "is", null)
-    .limit(30000);
-
-  if (allError) {
-    alert("전체 대학 목록 오류: " + allError.message);
+    console.error(error);
     return;
   }
 
   const list = [
-    ...new Set((allData || []).map((row: any) => row.university).filter(Boolean)),
+    ...new Set((data || []).map((row: any) => row.university).filter(Boolean)),
   ].sort();
 
+  console.log("대학목록 개수:", list.length);
   setUniversityOptions(list);
 }
 
