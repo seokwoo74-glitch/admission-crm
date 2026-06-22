@@ -11,7 +11,7 @@ const supabase = createClient(
 
 type ScoreItem = {
   subject?: string;
-  choice?: string;
+  choice?: string | number;
   score?: string | number;
   percentile?: string | number;
   grade?: string | number;
@@ -23,6 +23,7 @@ type RecordData = {
   student_name: string;
   school: string;
   grade: string;
+  student_grade?: string;
   track?: string;
   overall_gpa?: string | number;
   major_gpa?: string | number;
@@ -34,6 +35,7 @@ type RecordData = {
   strategy_type?: string;
   question?: string;
   memo?: string;
+  june_scores?: any;
   september_scores?: any;
   november_scores?: any;
   universities?: any;
@@ -52,11 +54,61 @@ function safeParse(value: any) {
   }
 }
 
+function showValue(value: any) {
+  return value !== undefined && value !== null && value !== "" ? value : "-";
+}
+
 function normalizeScores(raw: any): ScoreItem[] {
   const data = safeParse(raw);
   if (!data) return [];
 
   if (Array.isArray(data)) return data;
+
+  if (
+    data.math_score !== undefined ||
+    data.korean_score !== undefined ||
+    data.english_grade !== undefined ||
+    data.tamgu1_score !== undefined ||
+    data.tamgu2_score !== undefined
+  ) {
+    return [
+      {
+        subject: "국어",
+        choice: data.korean_type || "",
+        score: data.korean_score || "",
+        percentile: data.korean_percentile || "",
+        grade: data.korean_grade || "",
+      },
+      {
+        subject: "수학",
+        choice: data.math_type || "",
+        score: data.math_score || "",
+        percentile: data.math_percentile || "",
+        grade: data.math_grade || "",
+      },
+      {
+        subject: "영어",
+        choice: "-",
+        score: data.english_score || "",
+        percentile: data.english_percentile || "",
+        grade: data.english_grade || "",
+      },
+      {
+        subject: "탐구1",
+        choice: data.tamgu1_type || "",
+        score: data.tamgu1_score || "",
+        percentile: data.tamgu1_percentile || "",
+        grade: data.tamgu1_grade || "",
+      },
+      {
+        subject: "탐구2",
+        choice: data.tamgu2_type || "",
+        score: data.tamgu2_score || "",
+        percentile: data.tamgu2_percentile || "",
+        grade: data.tamgu2_grade || "",
+      },
+    ];
+  }
 
   const labels: Record<string, string> = {
     korean: "국어",
@@ -64,18 +116,14 @@ function normalizeScores(raw: any): ScoreItem[] {
     english: "영어",
     inquiry1: "탐구1",
     inquiry2: "탐구2",
-    science1: "탐구1",
-    science2: "탐구2",
-    social1: "탐구1",
-    social2: "탐구2",
   };
 
   return Object.entries(data).map(([key, value]: any) => ({
     subject: labels[key] || value?.subject || key,
-    choice: value?.choice || value?.select || value?.subject_choice || "",
-    score: value?.score ?? value?.raw ?? "",
-    percentile: value?.percentile ?? value?.percent ?? "",
-    grade: value?.grade ?? "",
+    choice: value?.choice || value?.type || "",
+    score: value?.score || "",
+    percentile: value?.percentile || "",
+    grade: value?.grade || "",
   }));
 }
 
@@ -107,19 +155,19 @@ function ScoreTable({
             {scores.map((s, i) => (
               <tr key={i} className="text-center">
                 <td className="border border-slate-200 px-3 py-2 font-semibold">
-                  {s.subject || "-"}
+                  {showValue(s.subject)}
                 </td>
                 <td className="border border-slate-200 px-3 py-2">
-                  {s.choice || "-"}
+                  {showValue(s.choice)}
                 </td>
                 <td className="border border-slate-200 px-3 py-2">
-                  {s.score || "-"}
+                  {showValue(s.score)}
                 </td>
                 <td className="border border-slate-200 px-3 py-2">
-                  {s.percentile || "-"}
+                  {showValue(s.percentile)}
                 </td>
                 <td className="border border-slate-200 px-3 py-2">
-                  {s.grade || "-"}
+                  {showValue(s.grade)}
                 </td>
               </tr>
             ))}
@@ -176,6 +224,22 @@ export default function ResultPage() {
     if (id) fetchRecord();
   }, [id]);
 
+  useEffect(() => {
+    if (!loading && record && typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("print") === "1") {
+        setTimeout(() => {
+          window.print();
+        }, 500);
+      }
+    }
+  }, [loading, record]);
+
+  function openPrintPage() {
+    if (typeof window === "undefined") return;
+    window.open(`/admin/results/${id}?print=1`, "_blank");
+  }
+
   if (loading) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-slate-100">
@@ -196,6 +260,7 @@ export default function ResultPage() {
     <main className="min-h-screen bg-slate-100 px-4 py-8 print:bg-white print:p-0">
       <div className="mx-auto mb-4 flex max-w-4xl justify-between print:hidden">
         <button
+          type="button"
           onClick={() => router.back()}
           className="rounded-lg bg-slate-700 px-4 py-2 text-sm font-semibold text-white"
         >
@@ -203,14 +268,15 @@ export default function ResultPage() {
         </button>
 
         <button
-          onClick={() => window.print()}
+          type="button"
+          onClick={openPrintPage}
           className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white"
         >
-          PDF 저장 / 인쇄
+          PDF 저장하기
         </button>
       </div>
 
-      <div className="mx-auto max-w-4xl rounded-2xl bg-white p-8 shadow print:max-w-none print:rounded-none print:shadow-none">
+      <div className="mx-auto max-w-4xl rounded-2xl bg-white p-8 shadow print:max-w-none print:rounded-none print:p-6 print:shadow-none">
         <header className="border-b border-slate-200 pb-6">
           <p className="text-sm font-semibold text-blue-600">
             강성재교육연구소 AI 입시 CRM
@@ -226,7 +292,7 @@ export default function ResultPage() {
         <section className="mt-8 grid grid-cols-2 gap-3 text-sm">
           <Info label="학생 이름" value={record.student_name} />
           <Info label="학교" value={record.school} />
-          <Info label="학년" value={record.grade} />
+          <Info label="학년" value={record.grade || record.student_grade} />
           <Info label="계열" value={record.track} />
           <Info label="전교과 내신" value={record.overall_gpa} />
           <Info label="주요교과 내신" value={record.major_gpa} />
@@ -254,7 +320,7 @@ export default function ResultPage() {
             <h2 className="mb-3 text-xl font-bold text-slate-900">
               상담 메모
             </h2>
-            <div className="rounded-xl bg-slate-50 p-4 text-sm leading-7 text-slate-700 whitespace-pre-wrap">
+            <div className="whitespace-pre-wrap rounded-xl bg-slate-50 p-4 text-sm leading-7 text-slate-700">
               {record.memo}
             </div>
           </section>
@@ -288,19 +354,19 @@ export default function ResultPage() {
                   {universities.map((u: any, i: number) => (
                     <tr key={i} className="text-center">
                       <td className="border border-slate-200 px-3 py-2">
-                        {u.university || "-"}
+                        {showValue(u.university)}
                       </td>
                       <td className="border border-slate-200 px-3 py-2">
-                        {u.admission || u.admission_type || "-"}
+                        {showValue(u.admission || u.admission_type)}
                       </td>
                       <td className="border border-slate-200 px-3 py-2">
-                        {u.track || "-"}
+                        {showValue(u.track)}
                       </td>
                       <td className="border border-slate-200 px-3 py-2">
-                        {u.department || "-"}
+                        {showValue(u.department)}
                       </td>
                       <td className="border border-slate-200 px-3 py-2 text-left">
-                        {u.point || "-"}
+                        {showValue(u.point)}
                       </td>
                     </tr>
                   ))}
@@ -315,7 +381,7 @@ export default function ResultPage() {
             <h2 className="mb-3 text-xl font-bold text-slate-900">
               AI 종합 코멘트
             </h2>
-            <div className="rounded-xl bg-blue-50 p-4 text-sm leading-7 text-slate-800 whitespace-pre-wrap">
+            <div className="whitespace-pre-wrap rounded-xl bg-blue-50 p-4 text-sm leading-7 text-slate-800">
               {record.ai_comment}
             </div>
           </section>
@@ -326,7 +392,7 @@ export default function ResultPage() {
             <h2 className="mb-3 text-xl font-bold text-slate-900">
               추천 전략
             </h2>
-            <div className="rounded-xl bg-emerald-50 p-4 text-sm leading-7 text-slate-800 whitespace-pre-wrap">
+            <div className="whitespace-pre-wrap rounded-xl bg-emerald-50 p-4 text-sm leading-7 text-slate-800">
               {record.ai_recommendation}
             </div>
           </section>
@@ -337,7 +403,7 @@ export default function ResultPage() {
             <h2 className="mb-3 text-xl font-bold text-slate-900">
               대학별 분석
             </h2>
-            <div className="rounded-xl bg-amber-50 p-4 text-sm leading-7 text-slate-800 whitespace-pre-wrap">
+            <div className="whitespace-pre-wrap rounded-xl bg-amber-50 p-4 text-sm leading-7 text-slate-800">
               {record.ai_university_analysis}
             </div>
           </section>
@@ -355,9 +421,7 @@ function Info({ label, value }: { label: string; value: any }) {
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-3">
       <div className="text-xs font-semibold text-slate-500">{label}</div>
-      <div className="mt-1 font-bold text-slate-900">
-        {value !== undefined && value !== null && value !== "" ? value : "-"}
-      </div>
+      <div className="mt-1 font-bold text-slate-900">{showValue(value)}</div>
     </div>
   );
 }
