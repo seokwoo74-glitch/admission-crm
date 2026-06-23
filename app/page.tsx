@@ -30,10 +30,31 @@ const emptyDesired: DesiredUniversity = {
   department: "",
 };
 
+const emptyScores = {
+  koreanSubject: "",
+  koreanScore: "",
+  koreanPercentile: "",
+  koreanGrade: "",
+  mathSubject: "",
+  mathScore: "",
+  mathPercentile: "",
+  mathGrade: "",
+  englishGrade: "",
+  inquiry1Subject: "",
+  inquiry1Score: "",
+  inquiry1Percentile: "",
+  inquiry1Grade: "",
+  inquiry2Subject: "",
+  inquiry2Score: "",
+  inquiry2Percentile: "",
+  inquiry2Grade: "",
+};
+
 export default function HomePage() {
   const [studentName, setStudentName] = useState("");
   const [school, setSchool] = useState("");
   const [grade, setGrade] = useState("");
+
   const [studentPhone, setStudentPhone] = useState("");
   const [parentPhone, setParentPhone] = useState("");
   const [referral, setReferral] = useState("");
@@ -53,6 +74,8 @@ export default function HomePage() {
   const [preferredCallDate, setPreferredCallDate] = useState("");
   const [question, setQuestion] = useState("");
 
+  const [juneScores, setJuneScores] = useState({ ...emptyScores });
+
   const [admissionRows, setAdmissionRows] = useState<AdmissionRow[]>([]);
   const [desiredUniversities, setDesiredUniversities] = useState<
     DesiredUniversity[]
@@ -63,17 +86,32 @@ export default function HomePage() {
 
   useEffect(() => {
     async function loadAdmissionDb() {
-      const { data, error } = await supabase
-        .from("admission_db")
-        .select("id, university, admission_type, track, department")
-        .order("university", { ascending: true });
+      const pageSize = 1000;
+      let from = 0;
+      let allRows: AdmissionRow[] = [];
 
-      if (error) {
-        console.error(error);
-        return;
+      while (true) {
+        const { data, error } = await supabase
+          .from("admission_db")
+          .select("id, university, admission_type, track, department")
+          .order("university", { ascending: true })
+          .range(from, from + pageSize - 1);
+
+        if (error) {
+          console.error(error);
+          break;
+        }
+
+        if (!data || data.length === 0) break;
+
+        allRows = [...allRows, ...data];
+
+        if (data.length < pageSize) break;
+
+        from += pageSize;
       }
 
-      setAdmissionRows(data || []);
+      setAdmissionRows(allRows);
     }
 
     loadAdmissionDb();
@@ -82,7 +120,7 @@ export default function HomePage() {
   const universities = useMemo(() => {
     return Array.from(
       new Set(admissionRows.map((row) => row.university).filter(Boolean))
-    );
+    ).sort();
   }, [admissionRows]);
 
   function getAdmissions(university: string) {
@@ -93,7 +131,7 @@ export default function HomePage() {
           .map((row) => row.admission_type)
           .filter(Boolean)
       )
-    );
+    ).sort();
   }
 
   function getTracks(university: string, admission: string) {
@@ -108,7 +146,7 @@ export default function HomePage() {
           .map((row) => row.track)
           .filter(Boolean)
       )
-    );
+    ).sort();
   }
 
   function getDepartments(
@@ -128,7 +166,7 @@ export default function HomePage() {
           .map((row) => row.department)
           .filter(Boolean)
       )
-    );
+    ).sort();
   }
 
   function updateDesiredUniversity(
@@ -159,6 +197,13 @@ export default function HomePage() {
     });
   }
 
+  function updateJuneScore(key: keyof typeof emptyScores, value: string) {
+    setJuneScores((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+  }
+
   function addDesiredUniversity() {
     if (desiredUniversities.length >= 9) return;
     setDesiredUniversities((prev) => [...prev, { ...emptyDesired }]);
@@ -182,10 +227,7 @@ export default function HomePage() {
 
     const cleanedDesiredUniversities = desiredUniversities.filter(
       (item) =>
-        item.university ||
-        item.admission ||
-        item.track ||
-        item.department
+        item.university || item.admission || item.track || item.department
     );
 
     const payload = {
@@ -209,8 +251,10 @@ export default function HomePage() {
       csat_plan: csatPlan,
       priority_after_final: priorityAfterFinal,
       strategy_type: strategyType,
-      preferred_call_date: preferredCallDate,
+      preferred_call_date: preferredCallDate.trim(),
       question: question.trim(),
+
+      june_scores: juneScores,
       desired_universities: cleanedDesiredUniversities,
     };
 
@@ -255,7 +299,7 @@ export default function HomePage() {
             강성재교육연구소
           </p>
           <h1 className="mt-2 text-3xl font-extrabold text-slate-900">
-            AI 입시 상담 신청서
+            입시 컨설팅 신청서
           </h1>
           <p className="mt-3 text-slate-600">
             상담에 필요한 기본 정보와 희망 대학을 입력해주세요.
@@ -272,110 +316,84 @@ export default function HomePage() {
             <Input label="학교 *" value={school} setValue={setSchool} />
             <Input label="학년 *" value={grade} setValue={setGrade} />
 
-            <Input
-              label="학생 전화번호"
-              value={studentPhone}
-              setValue={setStudentPhone}
-              placeholder="010-0000-0000"
-            />
-            <Input
-              label="학부모 전화번호"
-              value={parentPhone}
-              setValue={setParentPhone}
-              placeholder="010-0000-0000"
-            />
-            <Input
-              label="소개자"
-              value={referral}
-              setValue={setReferral}
-              placeholder="소개자 이름 또는 경로"
-            />
+            <Input label="학생 전화번호" value={studentPhone} setValue={setStudentPhone} />
+            <Input label="학부모 전화번호" value={parentPhone} setValue={setParentPhone} />
+            <Input label="소개자" value={referral} setValue={setReferral} />
+
+            <Input label="졸업년도" value={graduationYear} setValue={setGraduationYear} />
+            <Select label="계열" value={track} setValue={setTrack} options={["인문", "자연", "예체능"]} />
+            <Select label="학교유형" value={schoolType} setValue={setSchoolType} options={["일반고", "자사고", "특목고", "특성화고", "기타"]} />
+
+            <Input label="전교과 내신" value={overallGpa} setValue={setOverallGpa} />
+            <Input label="주요교과 내신" value={majorGpa} setValue={setMajorGpa} />
+            <Input label="희망학과" value={hopeMajor} setValue={setHopeMajor} />
+
+            <Input label="전교 등수" value={classRank} setValue={setClassRank} />
+            <Select label="주력전형" value={admissionType} setValue={setAdmissionType} options={["교과전형", "종합전형", "논술전형", "지역인재", "지역의사제", "농어촌", "기회균형"]} />
+            <Select label="생기부 비교과 관리" value={extracurricularNeeded} setValue={setExtracurricularNeeded} options={["관리한다", "관리하지 않는다", "상담 후 결정"]} />
+
+            <Select label="수능대비" value={csatPlan} setValue={setCsatPlan} options={["전과목대비", "최저만 대비", "안함"]} />
+            <Select label="3-1 기말 후 최우선 순위" value={priorityAfterFinal} setValue={setPriorityAfterFinal} options={["생기부", "수능대비", "논술", "면접"]} />
+            <Select label="수시/정시 전략" value={strategyType} setValue={setStrategyType} options={["수시에 끝낸다", "정시까지 고려", "상담 후 결정"]} />
 
             <Input
-              label="졸업년도"
-              value={graduationYear}
-              setValue={setGraduationYear}
-            />
-            <Select
-              label="계열"
-              value={track}
-              setValue={setTrack}
-              options={["인문", "자연", "예체능"]}
-            />
-            <Select
-              label="학교유형"
-              value={schoolType}
-              setValue={setSchoolType}
-              options={["일반고", "자사고", "특목고", "특성화고", "기타"]}
-            />
-
-            <Input
-              label="전교과 내신"
-              value={overallGpa}
-              setValue={setOverallGpa}
-            />
-            <Input
-              label="주요교과 내신"
-              value={majorGpa}
-              setValue={setMajorGpa}
-            />
-            <Input
-              label="희망학과"
-              value={hopeMajor}
-              setValue={setHopeMajor}
-            />
-
-            <Input
-              label="전교 등수"
-              value={classRank}
-              setValue={setClassRank}
-            />
-            <Select
-              label="주력전형"
-              value={admissionType}
-              setValue={setAdmissionType}
-              options={[
-                "교과전형",
-                "종합전형",
-                "논술전형",
-                "지역인재",
-                "지역의사제",
-                "농어촌",
-                "기회균형",
-              ]}
-            />
-            <Select
-              label="생기부 비교과 관리"
-              value={extracurricularNeeded}
-              setValue={setExtracurricularNeeded}
-              options={["관리한다", "관리하지 않는다", "상담 후 결정"]}
-            />
-
-            <Select
-              label="수능대비"
-              value={csatPlan}
-              setValue={setCsatPlan}
-              options={["전과목대비", "최저만 대비", "안함"]}
-            />
-            <Select
-              label="3-1 기말 후 최우선 순위"
-              value={priorityAfterFinal}
-              setValue={setPriorityAfterFinal}
-              options={["생기부", "수능대비", "논술", "면접"]}
-            />
-            <Select
-              label="수시/정시 전략"
-              value={strategyType}
-              setValue={setStrategyType}
-              options={["수시에 끝낸다", "정시까지 고려", "상담 후 결정"]}
-            />
-
-            <Input
-              label="희망 상담일"
+              label="2차전화상담일"
               value={preferredCallDate}
               setValue={setPreferredCallDate}
-              placeholder="예: 6월 25일 오후"
+              placeholder="예: 9월 4,5,6 중 택1"
             />
+          </div>
+        </section>
+
+        <section className="mb-10">
+          <h2 className="mb-4 text-xl font-bold text-slate-900">
+            6월 모의고사 성적
+          </h2>
+
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <div className="grid gap-4 md:grid-cols-4">
+              <Select
+                label="국어 선택"
+                value={juneScores.koreanSubject}
+                setValue={(v) => updateJuneScore("koreanSubject", v)}
+                options={["화작", "언매"]}
+              />
+              <Input label="국어 원점수" value={juneScores.koreanScore} setValue={(v) => updateJuneScore("koreanScore", v)} />
+              <Input label="국어 백분위" value={juneScores.koreanPercentile} setValue={(v) => updateJuneScore("koreanPercentile", v)} />
+              <Input label="국어 등급" value={juneScores.koreanGrade} setValue={(v) => updateJuneScore("koreanGrade", v)} />
+
+              <Select
+                label="수학 선택"
+                value={juneScores.mathSubject}
+                setValue={(v) => updateJuneScore("mathSubject", v)}
+                options={["미적", "기하", "확통"]}
+              />
+              <Input label="수학 원점수" value={juneScores.mathScore} setValue={(v) => updateJuneScore("mathScore", v)} />
+              <Input label="수학 백분위" value={juneScores.mathPercentile} setValue={(v) => updateJuneScore("mathPercentile", v)} />
+              <Input label="수학 등급" value={juneScores.mathGrade} setValue={(v) => updateJuneScore("mathGrade", v)} />
+
+              <Input label="영어 등급" value={juneScores.englishGrade} setValue={(v) => updateJuneScore("englishGrade", v)} />
+
+              <Select
+                label="탐구1 과목"
+                value={juneScores.inquiry1Subject}
+                setValue={(v) => updateJuneScore("inquiry1Subject", v)}
+                options={inquirySubjects}
+              />
+              <Input label="탐구1 원점수" value={juneScores.inquiry1Score} setValue={(v) => updateJuneScore("inquiry1Score", v)} />
+              <Input label="탐구1 백분위" value={juneScores.inquiry1Percentile} setValue={(v) => updateJuneScore("inquiry1Percentile", v)} />
+              <Input label="탐구1 등급" value={juneScores.inquiry1Grade} setValue={(v) => updateJuneScore("inquiry1Grade", v)} />
+
+              <Select
+                label="탐구2 과목"
+                value={juneScores.inquiry2Subject}
+                setValue={(v) => updateJuneScore("inquiry2Subject", v)}
+                options={inquirySubjects}
+              />
+              <Input label="탐구2 원점수" value={juneScores.inquiry2Score} setValue={(v) => updateJuneScore("inquiry2Score", v)} />
+              <Input label="탐구2 백분위" value={juneScores.inquiry2Percentile} setValue={(v) => updateJuneScore("inquiry2Percentile", v)} />
+              <Input label="탐구2 등급" value={juneScores.inquiry2Grade} setValue={(v) => updateJuneScore("inquiry2Grade", v)} />
+            </div>
           </div>
         </section>
 
@@ -393,77 +411,28 @@ export default function HomePage() {
           </div>
 
           <div className="space-y-4">
-            {desiredUniversities.map((item, index) => {
-              const admissions = getAdmissions(item.university);
-              const tracks = getTracks(item.university, item.admission);
-              const departments = getDepartments(
-                item.university,
-                item.admission,
-                item.track
-              );
-
-              return (
-                <div
-                  key={index}
-                  className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
-                >
-                  <div className="mb-3 flex items-center justify-between">
-                    <p className="font-bold text-slate-800">
-                      희망 대학 {index + 1}
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => removeDesiredUniversity(index)}
-                      className="text-sm font-semibold text-red-500"
-                    >
-                      삭제
-                    </button>
-                  </div>
-
-                  <div className="grid gap-3 md:grid-cols-4">
-                    <Select
-                      label="대학"
-                      value={item.university}
-                      setValue={(v) =>
-                        updateDesiredUniversity(index, "university", v)
-                      }
-                      options={universities}
-                    />
-                    <Select
-                      label="전형"
-                      value={item.admission}
-                      setValue={(v) =>
-                        updateDesiredUniversity(index, "admission", v)
-                      }
-                      options={admissions}
-                    />
-                    <Select
-                      label="계열"
-                      value={item.track}
-                      setValue={(v) =>
-                        updateDesiredUniversity(index, "track", v)
-                      }
-                      options={tracks}
-                    />
-                    <Select
-                      label="모집단위"
-                      value={item.department}
-                      setValue={(v) =>
-                        updateDesiredUniversity(index, "department", v)
-                      }
-                      options={departments}
-                    />
-                  </div>
+            {desiredUniversities.map((item, index) => (
+              <div key={index} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <div className="mb-3 flex items-center justify-between">
+                  <p className="font-bold text-slate-800">희망 대학 {index + 1}</p>
+                  <button type="button" onClick={() => removeDesiredUniversity(index)} className="text-sm font-semibold text-red-500">
+                    삭제
+                  </button>
                 </div>
-              );
-            })}
+
+                <div className="grid gap-3 md:grid-cols-4">
+                  <Select label="대학" value={item.university} setValue={(v) => updateDesiredUniversity(index, "university", v)} options={universities} />
+                  <Select label="전형" value={item.admission} setValue={(v) => updateDesiredUniversity(index, "admission", v)} options={getAdmissions(item.university)} />
+                  <Select label="계열" value={item.track} setValue={(v) => updateDesiredUniversity(index, "track", v)} options={getTracks(item.university, item.admission)} />
+                  <Select label="모집단위" value={item.department} setValue={(v) => updateDesiredUniversity(index, "department", v)} options={getDepartments(item.university, item.admission, item.track)} />
+                </div>
+              </div>
+            ))}
           </div>
         </section>
 
         <section className="mb-10">
-          <h2 className="mb-4 text-xl font-bold text-slate-900">
-            상담 요청사항
-          </h2>
+          <h2 className="mb-4 text-xl font-bold text-slate-900">상담 요청사항</h2>
           <textarea
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
@@ -484,6 +453,26 @@ export default function HomePage() {
     </main>
   );
 }
+
+const inquirySubjects = [
+  "물1",
+  "화1",
+  "생1",
+  "지1",
+  "물2",
+  "화2",
+  "생2",
+  "지2",
+  "생윤",
+  "사문",
+  "윤사",
+  "한지",
+  "세지",
+  "동사",
+  "세사",
+  "정법",
+  "경제",
+];
 
 function Input({
   label,
