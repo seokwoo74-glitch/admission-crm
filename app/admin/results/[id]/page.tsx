@@ -58,7 +58,11 @@ function safeParse(value: any) {
   if (!value) return null;
   if (typeof value === "object") return value;
   try {
-    return JSON.parse(value);
+    const parsed = JSON.parse(value);
+    if (typeof parsed === "string") {
+      return JSON.parse(parsed);
+    }
+    return parsed;
   } catch {
     return null;
   }
@@ -70,8 +74,55 @@ function showValue(value: any) {
 
 function normalizeScores(raw: any): ScoreItem[] {
   const data = safeParse(raw);
+
   if (!data) return [];
   if (Array.isArray(data)) return data;
+
+  if (
+    data.korean ||
+    data.math ||
+    data.english ||
+    data.inquiry1 ||
+    data.inquiry2
+  ) {
+    return [
+      {
+        subject: "국어",
+        choice: data.korean?.choice || data.korean?.type || "",
+        score: data.korean?.score || "",
+        percentile: data.korean?.percentile || "",
+        grade: data.korean?.grade || "",
+      },
+      {
+        subject: "수학",
+        choice: data.math?.choice || data.math?.type || "",
+        score: data.math?.score || "",
+        percentile: data.math?.percentile || "",
+        grade: data.math?.grade || "",
+      },
+      {
+        subject: "영어",
+        choice: "-",
+        score: data.english?.score || "",
+        percentile: data.english?.percentile || "",
+        grade: data.english?.grade || "",
+      },
+      {
+        subject: "탐구1",
+        choice: data.inquiry1?.choice || data.inquiry1?.type || "",
+        score: data.inquiry1?.score || "",
+        percentile: data.inquiry1?.percentile || "",
+        grade: data.inquiry1?.grade || "",
+      },
+      {
+        subject: "탐구2",
+        choice: data.inquiry2?.choice || data.inquiry2?.type || "",
+        score: data.inquiry2?.score || "",
+        percentile: data.inquiry2?.percentile || "",
+        grade: data.inquiry2?.grade || "",
+      },
+    ];
+  }
 
   if (
     data.koreanSubject !== undefined ||
@@ -121,21 +172,57 @@ function normalizeScores(raw: any): ScoreItem[] {
     ];
   }
 
-  const labels: Record<string, string> = {
-    korean: "국어",
-    math: "수학",
-    english: "영어",
-    inquiry1: "탐구1",
-    inquiry2: "탐구2",
-  };
+  if (
+    data.korean_type !== undefined ||
+    data.korean_score !== undefined ||
+    data.math_type !== undefined ||
+    data.math_score !== undefined ||
+    data.english_grade !== undefined ||
+    data.tamgu1_type !== undefined ||
+    data.tamgu2_type !== undefined ||
+    data.inquiry1_type !== undefined ||
+    data.inquiry2_type !== undefined
+  ) {
+    return [
+      {
+        subject: "국어",
+        choice: data.korean_type || "",
+        score: data.korean_score || "",
+        percentile: data.korean_percentile || "",
+        grade: data.korean_grade || "",
+      },
+      {
+        subject: "수학",
+        choice: data.math_type || "",
+        score: data.math_score || "",
+        percentile: data.math_percentile || "",
+        grade: data.math_grade || "",
+      },
+      {
+        subject: "영어",
+        choice: "-",
+        score: data.english_score || "",
+        percentile: data.english_percentile || "",
+        grade: data.english_grade || "",
+      },
+      {
+        subject: "탐구1",
+        choice: data.tamgu1_type || data.inquiry1_type || "",
+        score: data.tamgu1_score || data.inquiry1_score || "",
+        percentile: data.tamgu1_percentile || data.inquiry1_percentile || "",
+        grade: data.tamgu1_grade || data.inquiry1_grade || "",
+      },
+      {
+        subject: "탐구2",
+        choice: data.tamgu2_type || data.inquiry2_type || "",
+        score: data.tamgu2_score || data.inquiry2_score || "",
+        percentile: data.tamgu2_percentile || data.inquiry2_percentile || "",
+        grade: data.tamgu2_grade || data.inquiry2_grade || "",
+      },
+    ];
+  }
 
-  return Object.entries(data).map(([key, value]: any) => ({
-    subject: labels[key] || value?.subject || key,
-    choice: value?.choice || value?.type || "",
-    score: value?.score || "",
-    percentile: value?.percentile || "",
-    grade: value?.grade || "",
-  }));
+  return [];
 }
 
 export default function ResultPage() {
@@ -226,10 +313,6 @@ export default function ResultPage() {
           @page {
             size: A4;
             margin: 8mm;
-          }
-
-          .print-page-break {
-            page-break-before: always;
           }
 
           .break-inside-avoid {
