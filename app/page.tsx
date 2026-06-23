@@ -345,57 +345,55 @@ export default function HomePage() {
           </div>
         </section>
 
-        <section className="mb-10">
-          <h2 className="mb-4 text-xl font-bold text-slate-900">
-            6월 모의고사 성적
-          </h2>
+<section className="mb-10">
+  <h2 className="mb-4 text-xl font-bold text-slate-900">
+    6월 모의고사 성적
+  </h2>
 
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-            <div className="grid gap-4 md:grid-cols-4">
-              <Select
-                label="국어 선택"
-                value={juneScores.koreanSubject}
-                setValue={(v) => updateJuneScore("koreanSubject", v)}
-                options={["화작", "언매"]}
-              />
-              <Input label="국어 원점수" value={juneScores.koreanScore} setValue={(v) => updateJuneScore("koreanScore", v)} />
-              <Input label="국어 백분위" value={juneScores.koreanPercentile} setValue={(v) => updateJuneScore("koreanPercentile", v)} />
-              <Input label="국어 등급" value={juneScores.koreanGrade} setValue={(v) => updateJuneScore("koreanGrade", v)} />
+  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+    <div className="space-y-4">
+      <div className="grid gap-4 md:grid-cols-5">
+        <Select label="국어 선택" value={juneScores.koreanSubject} setValue={(v) => updateJuneScore("koreanSubject", v)} options={["화작", "언매"]} />
+        <Input label="국어 원점수" value={juneScores.koreanScore} setValue={(v) => updateJuneScore("koreanScore", v)} />
+        <Input label="국어 백분위" value={juneScores.koreanPercentile} setValue={(v) => updateJuneScore("koreanPercentile", v)} />
+        <Input label="국어 등급" value={juneScores.koreanGrade} setValue={(v) => updateJuneScore("koreanGrade", v)} />
+        <div />
+      </div>
 
-              <Select
-                label="수학 선택"
-                value={juneScores.mathSubject}
-                setValue={(v) => updateJuneScore("mathSubject", v)}
-                options={["미적", "기하", "확통"]}
-              />
-              <Input label="수학 원점수" value={juneScores.mathScore} setValue={(v) => updateJuneScore("mathScore", v)} />
-              <Input label="수학 백분위" value={juneScores.mathPercentile} setValue={(v) => updateJuneScore("mathPercentile", v)} />
-              <Input label="수학 등급" value={juneScores.mathGrade} setValue={(v) => updateJuneScore("mathGrade", v)} />
+      <div className="grid gap-4 md:grid-cols-5">
+        <Select label="수학 선택" value={juneScores.mathSubject} setValue={(v) => updateJuneScore("mathSubject", v)} options={["미적", "기하", "확통"]} />
+        <Input label="수학 원점수" value={juneScores.mathScore} setValue={(v) => updateJuneScore("mathScore", v)} />
+        <Input label="수학 백분위" value={juneScores.mathPercentile} setValue={(v) => updateJuneScore("mathPercentile", v)} />
+        <Input label="수학 등급" value={juneScores.mathGrade} setValue={(v) => updateJuneScore("mathGrade", v)} />
+        <div />
+      </div>
 
-              <Input label="영어 등급" value={juneScores.englishGrade} setValue={(v) => updateJuneScore("englishGrade", v)} />
+      <div className="grid gap-4 md:grid-cols-5">
+        <Input label="영어 등급" value={juneScores.englishGrade} setValue={(v) => updateJuneScore("englishGrade", v)} />
+        <div />
+        <div />
+        <div />
+        <div />
+      </div>
 
-              <Select
-                label="탐구1 과목"
-                value={juneScores.inquiry1Subject}
-                setValue={(v) => updateJuneScore("inquiry1Subject", v)}
-                options={inquirySubjects}
-              />
-              <Input label="탐구1 원점수" value={juneScores.inquiry1Score} setValue={(v) => updateJuneScore("inquiry1Score", v)} />
-              <Input label="탐구1 백분위" value={juneScores.inquiry1Percentile} setValue={(v) => updateJuneScore("inquiry1Percentile", v)} />
-              <Input label="탐구1 등급" value={juneScores.inquiry1Grade} setValue={(v) => updateJuneScore("inquiry1Grade", v)} />
+      <div className="grid gap-4 md:grid-cols-5">
+        <Select label="탐구1 과목" value={juneScores.inquiry1Subject} setValue={(v) => updateJuneScore("inquiry1Subject", v)} options={inquirySubjects} />
+        <Input label="탐구1 원점수" value={juneScores.inquiry1Score} setValue={(v) => updateJuneScore("inquiry1Score", v)} />
+        <Input label="탐구1 백분위" value={juneScores.inquiry1Percentile} setValue={(v) => updateJuneScore("inquiry1Percentile", v)} />
+        <Input label="탐구1 등급" value={juneScores.inquiry1Grade} setValue={(v) => updateJuneScore("inquiry1Grade", v)} />
+        <div />
+      </div>
 
-              <Select
-                label="탐구2 과목"
-                value={juneScores.inquiry2Subject}
-                setValue={(v) => updateJuneScore("inquiry2Subject", v)}
-                options={inquirySubjects}
-              />
-              <Input label="탐구2 원점수" value={juneScores.inquiry2Score} setValue={(v) => updateJuneScore("inquiry2Score", v)} />
-              <Input label="탐구2 백분위" value={juneScores.inquiry2Percentile} setValue={(v) => updateJuneScore("inquiry2Percentile", v)} />
-              <Input label="탐구2 등급" value={juneScores.inquiry2Grade} setValue={(v) => updateJuneScore("inquiry2Grade", v)} />
-            </div>
-          </div>
-        </section>
+      <div className="grid gap-4 md:grid-cols-5">
+        <Select label="탐구2 과목" value={juneScores.inquiry2Subject} setValue={(v) => updateJuneScore("inquiry2Subject", v)} options={inquirySubjects} />
+        <Input label="탐구2 원점수" value={juneScores.inquiry2Score} setValue={(v) => updateJuneScore("inquiry2Score", v)} />
+        <Input label="탐구2 백분위" value={juneScores.inquiry2Percentile} setValue={(v) => updateJuneScore("inquiry2Percentile", v)} />
+        <Input label="탐구2 등급" value={juneScores.inquiry2Grade} setValue={(v) => updateJuneScore("inquiry2Grade", v)} />
+        <div />
+      </div>
+    </div>
+  </div>
+</section>
 
         <section className="mb-10">
           <div className="mb-4 flex items-center justify-between">
