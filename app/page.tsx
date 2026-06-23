@@ -290,7 +290,7 @@ export default function HomePage() {
               강성재교육연구소
             </h2>
             <p className="mt-1 text-xs font-semibold tracking-[0.2em] text-[#7a6a50]">
-              GANG SUNG JAE EDUCATION INSTITUTE
+              KANG's Edu Lab
             </p>
           </div>
 
