@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@supabase/supabase-js";
 
@@ -9,21 +9,51 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-const emptyScores = {
-  korean: { subject: "국어", choice: "", score: "", percentile: "", grade: "" },
-  math: { subject: "수학", choice: "", score: "", percentile: "", grade: "" },
-  english: { subject: "영어", choice: "", score: "", percentile: "", grade: "" },
-  inquiry1: { subject: "탐구1", choice: "", score: "", percentile: "", grade: "" },
-  inquiry2: { subject: "탐구2", choice: "", score: "", percentile: "", grade: "" },
+type ScoreKey = "korean" | "math" | "english" | "inquiry1" | "inquiry2";
+type ExamKey = "june_scores" | "september_scores" | "november_scores";
+
+type ScoreSet = Record<
+  ScoreKey,
+  {
+    subject: string;
+    choice: string;
+    score: string;
+    percentile: string;
+    grade: string;
+  }
+>;
+
+type UnivRow = {
+  university: string;
+  admission: string;
+  admission_type?: string;
+  track: string;
+  department: string;
+  quota?: string | number;
+  method?: string;
+  minimum_score?: string;
+  exam_date?: string;
+  competition_rate?: string | number;
+  cut_score?: string | number;
+  point?: string;
 };
 
-const scoreKeys = ["korean", "math", "english", "inquiry1", "inquiry2"];
-const scoreLabels: any = {
+const scoreKeys: ScoreKey[] = ["korean", "math", "english", "inquiry1", "inquiry2"];
+
+const scoreLabels: Record<ScoreKey, string> = {
   korean: "국어",
   math: "수학",
   english: "영어",
   inquiry1: "탐구1",
   inquiry2: "탐구2",
+};
+
+const emptyScores: ScoreSet = {
+  korean: { subject: "국어", choice: "", score: "", percentile: "", grade: "" },
+  math: { subject: "수학", choice: "", score: "", percentile: "", grade: "" },
+  english: { subject: "영어", choice: "", score: "", percentile: "", grade: "" },
+  inquiry1: { subject: "탐구1", choice: "", score: "", percentile: "", grade: "" },
+  inquiry2: { subject: "탐구2", choice: "", score: "", percentile: "", grade: "" },
 };
 
 export default function ConsultingPage() {
@@ -35,6 +65,7 @@ export default function ConsultingPage() {
   const [saving, setSaving] = useState(false);
 
   const [recordId, setRecordId] = useState("");
+  const [admissionRows, setAdmissionRows] = useState<UnivRow[]>([]);
 
   const [form, setForm] = useState<any>({
     student_name: "",
@@ -85,8 +116,17 @@ export default function ConsultingPage() {
       .limit(1)
       .maybeSingle();
 
-    const base = recordData || appData;
+    const { data: dbRows, error: dbError } = await supabase
+      .from("admission_db")
+      .select(
+        "university, admission_type, track, department, quota, method, minimum_score, exam_date, competition_rate, cut_score, point"
+      )
+      .order("university", { ascending: true });
 
+    if (dbError) console.error(dbError);
+    setAdmissionRows((dbRows || []) as any);
+
+    const base = recordData || appData;
     setRecordId(recordData?.id || "");
 
     setForm({
@@ -104,13 +144,31 @@ export default function ConsultingPage() {
       strategy_type: base?.strategy_type || "",
       question: base?.question || "",
       memo: recordData?.memo || "",
-      june_scores: safeObj(recordData?.june_scores) || emptyScores,
-      september_scores: safeObj(recordData?.september_scores) || emptyScores,
-      november_scores: safeObj(recordData?.november_scores) || emptyScores,
+
+      june_scores:
+        normalizeScores(recordData?.june_scores) ||
+        normalizeScores(appData?.june_scores) ||
+        normalizeScores(appData?.exam_scores?.june) ||
+        normalizeScores(appData?.mock_scores?.june) ||
+        normalizeScores(appData) ||
+        emptyScores,
+
+      september_scores:
+        normalizeScores(recordData?.september_scores) ||
+        normalizeScores(appData?.september_scores) ||
+        normalizeScores(appData?.exam_scores?.september) ||
+        emptyScores,
+
+      november_scores:
+        normalizeScores(recordData?.november_scores) ||
+        normalizeScores(appData?.november_scores) ||
+        normalizeScores(appData?.exam_scores?.november) ||
+        emptyScores,
+
       universities:
-        safeArr(recordData?.universities) ||
-        safeArr(appData?.desired_universities) ||
-        [],
+        safeArr(recordData?.universities).length > 0
+          ? safeArr(recordData?.universities)
+          : safeArr(appData?.desired_universities),
     });
 
     setLoading(false);
@@ -120,12 +178,7 @@ export default function ConsultingPage() {
     setForm((prev: any) => ({ ...prev, [key]: value }));
   }
 
-  function updateScore(
-    exam: "june_scores" | "september_scores" | "november_scores",
-    key: string,
-    field: string,
-    value: string
-  ) {
+  function updateScore(exam: ExamKey, key: ScoreKey, field: string, value: string) {
     setForm((prev: any) => ({
       ...prev,
       [exam]: {
@@ -136,6 +189,84 @@ export default function ConsultingPage() {
         },
       },
     }));
+  }
+
+  function updateUniversity(index: number, field: keyof UnivRow, value: string) {
+    setForm((prev: any) => {
+      const next = [...prev.universities];
+      next[index] = {
+        ...next[index],
+        [field]: value,
+      };
+
+      const updated = autofillUniversity(next[index]);
+
+      next[index] = updated;
+
+      return { ...prev, universities: next };
+    });
+  }
+
+  function addUniversity() {
+    setForm((prev: any) => ({
+      ...prev,
+      universities: [
+        ...prev.universities,
+        {
+          university: "",
+          admission: "",
+          track: "",
+          department: "",
+          quota: "",
+          method: "",
+          minimum_score: "",
+          exam_date: "",
+          competition_rate: "",
+          cut_score: "",
+          point: "",
+        },
+      ],
+    }));
+  }
+
+  function removeUniversity(index: number) {
+    setForm((prev: any) => ({
+      ...prev,
+      universities: prev.universities.filter((_: any, i: number) => i !== index),
+    }));
+  }
+
+  function autofillUniversity(row: UnivRow): UnivRow {
+    if (!row.university || !row.department) return row;
+
+    const found = admissionRows.find((r: any) => {
+      const sameUniversity = r.university === row.university;
+      const sameDepartment = r.department === row.department;
+      const sameTrack = row.track ? r.track === row.track : true;
+      const sameAdmission = row.admission
+        ? r.admission_type === row.admission || r.admission_type === row.admission_type
+        : true;
+
+      return sameUniversity && sameDepartment && sameTrack && sameAdmission;
+    });
+
+    if (!found) return row;
+
+    return {
+      ...row,
+      university: found.university || row.university,
+      admission: found.admission_type || row.admission || "",
+      admission_type: found.admission_type || row.admission_type || "",
+      track: found.track || row.track || "",
+      department: found.department || row.department,
+      quota: found.quota ?? "",
+      method: found.method ?? "",
+      minimum_score: found.minimum_score ?? "",
+      exam_date: found.exam_date ?? "",
+      competition_rate: found.competition_rate ?? "",
+      cut_score: found.cut_score ?? "",
+      point: found.point ?? "",
+    };
   }
 
   async function saveResult() {
@@ -189,6 +320,11 @@ export default function ConsultingPage() {
     alert("상담결과 저장 완료");
     router.push(`/admin/results/${data.id}`);
   }
+
+  const universityOptions = useMemo(
+    () => unique(admissionRows.map((r) => r.university)),
+    [admissionRows]
+  );
 
   if (loading) {
     return (
@@ -246,7 +382,9 @@ export default function ConsultingPage() {
         <aside className="h-fit rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="rounded-2xl bg-[#03c75a] p-5 text-white">
             <p className="text-sm font-bold opacity-90">상담 학생</p>
-            <h2 className="mt-2 text-3xl font-black">{form.student_name || "-"}</h2>
+            <h2 className="mt-2 text-3xl font-black">
+              {form.student_name || "-"}
+            </h2>
             <p className="mt-2 text-sm font-bold opacity-90">
               {form.school || "-"} · {form.grade || "-"}
             </p>
@@ -256,67 +394,63 @@ export default function ConsultingPage() {
             <SideInfo label="계열" value={form.track} />
             <SideInfo label="전교과" value={form.overall_gpa} />
             <SideInfo label="주요교과" value={form.major_gpa} />
-            <SideInfo label="주력전형" value={form.admission_type} />
+            <SideInfo label="희망대학" value={`${form.universities.length}개`} />
           </div>
         </aside>
 
         <div className="space-y-6">
           <Card title="신청서 정보 수정" desc="상담 전 기본 정보를 확인하고 수정합니다.">
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-              <Input label="학생 이름" value={form.student_name} onChange={(v) => updateField("student_name", v)} />
-              <Input label="학교" value={form.school} onChange={(v) => updateField("school", v)} />
-              <Input label="학년" value={form.grade} onChange={(v) => updateField("grade", v)} />
-              <Input label="계열" value={form.track} onChange={(v) => updateField("track", v)} />
-              <Input label="전교과 내신" value={form.overall_gpa} onChange={(v) => updateField("overall_gpa", v)} />
-              <Input label="주요교과 내신" value={form.major_gpa} onChange={(v) => updateField("major_gpa", v)} />
-              <Input label="전교 등수" value={form.class_rank} onChange={(v) => updateField("class_rank", v)} />
-              <Input label="주력전형" value={form.admission_type} onChange={(v) => updateField("admission_type", v)} />
-              <Input label="생기부 비교과 관리" value={form.extracurricular_needed} onChange={(v) => updateField("extracurricular_needed", v)} />
-              <Input label="수능대비" value={form.csat_plan} onChange={(v) => updateField("csat_plan", v)} />
-              <Input label="3-1 기말 후 최우선 순위" value={form.priority_after_final} onChange={(v) => updateField("priority_after_final", v)} />
-              <Input label="수시/정시 전략" value={form.strategy_type} onChange={(v) => updateField("strategy_type", v)} />
+              <Input label="학생 이름" value={form.student_name} onChange={(v: string) => updateField("student_name", v)} />
+              <Input label="학교" value={form.school} onChange={(v: string) => updateField("school", v)} />
+              <Input label="학년" value={form.grade} onChange={(v: string) => updateField("grade", v)} />
+              <Input label="계열" value={form.track} onChange={(v: string) => updateField("track", v)} />
+              <Input label="전교과 내신" value={form.overall_gpa} onChange={(v: string) => updateField("overall_gpa", v)} />
+              <Input label="주요교과 내신" value={form.major_gpa} onChange={(v: string) => updateField("major_gpa", v)} />
+              <Input label="전교 등수" value={form.class_rank} onChange={(v: string) => updateField("class_rank", v)} />
+              <Input label="주력전형" value={form.admission_type} onChange={(v: string) => updateField("admission_type", v)} />
+              <Input label="생기부 비교과 관리" value={form.extracurricular_needed} onChange={(v: string) => updateField("extracurricular_needed", v)} />
+              <Input label="수능대비" value={form.csat_plan} onChange={(v: string) => updateField("csat_plan", v)} />
+              <Input label="3-1 기말 후 최우선 순위" value={form.priority_after_final} onChange={(v: string) => updateField("priority_after_final", v)} />
+              <Input label="수시/정시 전략" value={form.strategy_type} onChange={(v: string) => updateField("strategy_type", v)} />
             </div>
           </Card>
 
-          <Card title="희망 대학" desc="신청서에서 선택한 대학/전형/모집단위입니다.">
-            {form.universities?.length ? (
-              <div className="overflow-hidden rounded-2xl border border-slate-200">
-                <table className="w-full text-sm">
-                  <thead className="bg-[#f0fff7] text-slate-700">
-                    <tr>
-                      <th className="border border-slate-200 p-3">번호</th>
-                      <th className="border border-slate-200 p-3">대학</th>
-                      <th className="border border-slate-200 p-3">전형</th>
-                      <th className="border border-slate-200 p-3">계열</th>
-                      <th className="border border-slate-200 p-3">모집단위</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {form.universities.map((u: any, i: number) => (
-                      <tr key={i} className="text-center">
-                        <td className="border border-slate-200 p-3 text-slate-500">{i + 1}</td>
-                        <td className="border border-slate-200 p-3 font-black">{u.university || "-"}</td>
-                        <td className="border border-slate-200 p-3">{u.admission || u.admission_type || "-"}</td>
-                        <td className="border border-slate-200 p-3">{u.track || "-"}</td>
-                        <td className="border border-slate-200 p-3">{u.department || "-"}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <p className="text-sm text-slate-500">등록된 희망 대학이 없습니다.</p>
-            )}
+          <Card
+            title="희망 대학 수정"
+            desc="대학/전형/계열/모집단위를 수정하면 admission_db 기준 경쟁률·컷·전형정보가 자동으로 다시 채워집니다."
+          >
+            <div className="space-y-5">
+              {form.universities.map((u: UnivRow, i: number) => (
+                <UniversityEditor
+                  key={i}
+                  index={i}
+                  row={u}
+                  admissionRows={admissionRows}
+                  universityOptions={universityOptions}
+                  updateUniversity={updateUniversity}
+                  removeUniversity={removeUniversity}
+                />
+              ))}
+
+              <button
+                type="button"
+                onClick={addUniversity}
+                className="w-full rounded-2xl border border-dashed border-[#03c75a] bg-[#f0fff7] px-4 py-4 text-sm font-black text-[#03a34b]"
+              >
+                + 희망 대학 추가
+              </button>
+            </div>
           </Card>
 
-          <ScoreSection title="6월 모의고사" exam="june_scores" scores={form.june_scores} updateScore={updateScore} />
+          <ScoreSection title="6월 모의고사 성적" exam="june_scores" scores={form.june_scores} updateScore={updateScore} />
           <ScoreSection title="9월 모의고사 목표" exam="september_scores" scores={form.september_scores} updateScore={updateScore} />
           <ScoreSection title="11월 수능 목표" exam="november_scores" scores={form.november_scores} updateScore={updateScore} />
 
           <Card title="상담 질문 / 상담 메모" desc="학생 질문과 최종 상담 내용을 기록합니다.">
             <div className="grid grid-cols-1 gap-4">
-              <TextArea label="상담 질문" value={form.question} onChange={(v) => updateField("question", v)} />
-              <TextArea label="상담 메모" value={form.memo} onChange={(v) => updateField("memo", v)} tall />
+              <TextArea label="상담 질문" value={form.question} onChange={(v: string) => updateField("question", v)} />
+              <TextArea label="상담 메모" value={form.memo} onChange={(v: string) => updateField("memo", v)} tall />
             </div>
           </Card>
 
@@ -346,69 +480,124 @@ export default function ConsultingPage() {
   );
 }
 
-function Card({ title, desc, children }: any) {
+function UniversityEditor({
+  index,
+  row,
+  admissionRows,
+  universityOptions,
+  updateUniversity,
+  removeUniversity,
+}: {
+  index: number;
+  row: UnivRow;
+  admissionRows: UnivRow[];
+  universityOptions: string[];
+  updateUniversity: (index: number, field: keyof UnivRow, value: string) => void;
+  removeUniversity: (index: number) => void;
+}) {
+  const admissionOptions = unique(
+    admissionRows
+      .filter((r) => r.university === row.university)
+      .map((r: any) => r.admission_type)
+  );
+
+  const trackOptions = unique(
+    admissionRows
+      .filter(
+        (r: any) =>
+          r.university === row.university &&
+          (!row.admission || r.admission_type === row.admission)
+      )
+      .map((r) => r.track)
+  );
+
+  const departmentOptions = unique(
+    admissionRows
+      .filter(
+        (r: any) =>
+          r.university === row.university &&
+          (!row.admission || r.admission_type === row.admission) &&
+          (!row.track || r.track === row.track)
+      )
+      .map((r) => r.department)
+  );
+
   return (
-    <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-      <div className="mb-5">
-        <h2 className="text-xl font-black text-slate-900">{title}</h2>
-        <p className="mt-1 text-sm font-medium text-slate-500">{desc}</p>
+    <div className="rounded-[24px] border border-slate-200 bg-white p-5">
+      <div className="mb-4 flex items-center justify-between">
+        <h3 className="text-lg font-black text-slate-900">
+          희망 대학 {index + 1}
+        </h3>
+
+        <button
+          type="button"
+          onClick={() => removeUniversity(index)}
+          className="rounded-xl bg-red-50 px-3 py-2 text-xs font-black text-red-600"
+        >
+          삭제
+        </button>
       </div>
-      {children}
-    </section>
+
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
+        <Select
+          label="대학"
+          value={row.university}
+          options={universityOptions}
+          onChange={(v: string) => updateUniversity(index, "university", v)}
+        />
+
+        <Select
+          label="전형"
+          value={row.admission || row.admission_type || ""}
+          options={admissionOptions}
+          onChange={(v: string) => updateUniversity(index, "admission", v)}
+        />
+
+        <Select
+          label="계열"
+          value={row.track}
+          options={trackOptions}
+          onChange={(v: string) => updateUniversity(index, "track", v)}
+        />
+
+        <Select
+          label="모집단위"
+          value={row.department}
+          options={departmentOptions}
+          onChange={(v: string) => updateUniversity(index, "department", v)}
+        />
+      </div>
+
+      <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-4">
+        <ReadonlyInfo label="모집인원" value={row.quota} />
+        <ReadonlyInfo label="경쟁률" value={row.competition_rate} />
+        <ReadonlyInfo label="내신컷" value={row.cut_score} />
+        <ReadonlyInfo label="수능최저" value={row.minimum_score} />
+      </div>
+
+      <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
+        <ReadonlyInfo label="전형방법" value={row.method} />
+        <ReadonlyInfo label="면접/고사일" value={row.exam_date} />
+      </div>
+
+      <div className="mt-3">
+        <ReadonlyInfo label="특이사항" value={row.point} />
+      </div>
+    </div>
   );
 }
 
-function Input({
-  label,
-  value,
-  onChange,
+function ScoreSection({
+  title,
+  exam,
+  scores,
+  updateScore,
 }: {
-  label: string;
-  value: any;
-  onChange: (v: string) => void;
+  title: string;
+  exam: ExamKey;
+  scores: ScoreSet;
+  updateScore: (exam: ExamKey, key: ScoreKey, field: string, value: string) => void;
 }) {
-  return (
-    <label className="block">
-      <span className="mb-1 block text-sm font-black text-slate-700">
-        {label}
-      </span>
-      <input
-        value={value || ""}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold outline-none focus:border-[#03c75a] focus:bg-white"
-      />
-    </label>
-  );
-}
-
-function TextArea({
-  label,
-  value,
-  onChange,
-  tall,
-}: {
-  label: string;
-  value: any;
-  onChange: (v: string) => void;
-  tall?: boolean;
-}) {
-  return (
-    <label className="block">
-      <span className="mb-1 block text-sm font-black text-slate-700">
-        {label}
-      </span>
-      <textarea
-        value={value || ""}
-        onChange={(e) => onChange(e.target.value)}
-        className={`w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-7 outline-none focus:border-[#03c75a] focus:bg-white ${
-          tall ? "min-h-[180px]" : "min-h-[100px]"
-        }`}
-      />
-    </label>
-  );
-}
-
-function ScoreSection({ title, exam, scores, updateScore }: any) {
   return (
     <Card title={title} desc="선택과목, 원점수, 백분위, 등급을 입력합니다.">
       <div className="overflow-hidden rounded-2xl border border-slate-200">
@@ -431,8 +620,10 @@ function ScoreSection({ title, exam, scores, updateScore }: any) {
                 {["choice", "score", "percentile", "grade"].map((field) => (
                   <td key={field} className="border border-slate-200 p-2">
                     <input
-                      value={scores?.[key]?.[field] || ""}
-                      onChange={(e) => updateScore(exam, key, field, e.target.value)}
+                      value={(scores as any)?.[key]?.[field] || ""}
+                      onChange={(e) =>
+                        updateScore(exam, key, field, e.target.value)
+                      }
                       className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-center outline-none focus:border-[#03c75a] focus:bg-white"
                     />
                   </td>
@@ -446,13 +637,135 @@ function ScoreSection({ title, exam, scores, updateScore }: any) {
   );
 }
 
-function SideInfo({ label, value }: any) {
+function Card({
+  title,
+  desc,
+  children,
+}: {
+  title: string;
+  desc: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="mb-5">
+        <h2 className="text-xl font-black text-slate-900">{title}</h2>
+        <p className="mt-1 text-sm font-medium text-slate-500">{desc}</p>
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function Input({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: any;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <label className="block">
+      <span className="mb-1 block text-sm font-black text-slate-700">{label}</span>
+      <input
+        value={value || ""}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold outline-none focus:border-[#03c75a] focus:bg-white"
+      />
+    </label>
+  );
+}
+
+function Select({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  value: any;
+  options: string[];
+  onChange: (v: string) => void;
+}) {
+  return (
+    <label className="block">
+      <span className="mb-1 block text-sm font-black text-slate-700">{label}</span>
+      <select
+        value={value || ""}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold outline-none focus:border-[#03c75a] focus:bg-white"
+      >
+        <option value="">선택</option>
+        {options.filter(Boolean).map((op) => (
+          <option key={op} value={op}>
+            {op}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+function TextArea({
+  label,
+  value,
+  onChange,
+  tall,
+}: {
+  label: string;
+  value: any;
+  onChange: (v: string) => void;
+  tall?: boolean;
+}) {
+  return (
+    <label className="block">
+      <span className="mb-1 block text-sm font-black text-slate-700">{label}</span>
+      <textarea
+        value={value || ""}
+        onChange={(e) => onChange(e.target.value)}
+        className={`w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-7 outline-none focus:border-[#03c75a] focus:bg-white ${
+          tall ? "min-h-[180px]" : "min-h-[100px]"
+        }`}
+      />
+    </label>
+  );
+}
+
+function SideInfo({ label, value }: { label: string; value: any }) {
   return (
     <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
       <p className="text-xs font-black text-slate-400">{label}</p>
       <p className="mt-1 text-lg font-black text-slate-900">{value || "-"}</p>
     </div>
   );
+}
+
+function ReadonlyInfo({ label, value }: { label: string; value: any }) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+      <p className="text-xs font-black text-slate-400">{label}</p>
+      <p className="mt-2 whitespace-pre-wrap text-sm font-bold text-slate-800">
+        {value !== undefined && value !== null && value !== "" ? value : "-"}
+      </p>
+    </div>
+  );
+}
+
+function unique(arr: any[]) {
+  return Array.from(new Set(arr.filter(Boolean))).sort();
+}
+
+function safeArr(value: any) {
+  if (!value) return [];
+  if (Array.isArray(value)) return value;
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
 }
 
 function safeObj(value: any) {
@@ -466,13 +779,71 @@ function safeObj(value: any) {
   }
 }
 
-function safeArr(value: any) {
-  if (!value) return [];
-  if (Array.isArray(value)) return value;
-  try {
-    const parsed = JSON.parse(value);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
+function normalizeScores(raw: any): ScoreSet | null {
+  const data = safeObj(raw);
+  if (!data) return null;
+
+  if (
+    data.korean ||
+    data.math ||
+    data.english ||
+    data.inquiry1 ||
+    data.inquiry2
+  ) {
+    return {
+      korean: { ...emptyScores.korean, ...(data.korean || {}) },
+      math: { ...emptyScores.math, ...(data.math || {}) },
+      english: { ...emptyScores.english, ...(data.english || {}) },
+      inquiry1: { ...emptyScores.inquiry1, ...(data.inquiry1 || {}) },
+      inquiry2: { ...emptyScores.inquiry2, ...(data.inquiry2 || {}) },
+    };
   }
+
+  if (
+    data.korean_score !== undefined ||
+    data.math_score !== undefined ||
+    data.english_grade !== undefined ||
+    data.tamgu1_score !== undefined ||
+    data.tamgu2_score !== undefined
+  ) {
+    return {
+      korean: {
+        subject: "국어",
+        choice: data.korean_type || "",
+        score: data.korean_score || "",
+        percentile: data.korean_percentile || "",
+        grade: data.korean_grade || "",
+      },
+      math: {
+        subject: "수학",
+        choice: data.math_type || "",
+        score: data.math_score || "",
+        percentile: data.math_percentile || "",
+        grade: data.math_grade || "",
+      },
+      english: {
+        subject: "영어",
+        choice: "",
+        score: data.english_score || "",
+        percentile: data.english_percentile || "",
+        grade: data.english_grade || "",
+      },
+      inquiry1: {
+        subject: "탐구1",
+        choice: data.tamgu1_type || data.inquiry1_type || "",
+        score: data.tamgu1_score || data.inquiry1_score || "",
+        percentile: data.tamgu1_percentile || data.inquiry1_percentile || "",
+        grade: data.tamgu1_grade || data.inquiry1_grade || "",
+      },
+      inquiry2: {
+        subject: "탐구2",
+        choice: data.tamgu2_type || data.inquiry2_type || "",
+        score: data.tamgu2_score || data.inquiry2_score || "",
+        percentile: data.tamgu2_percentile || data.inquiry2_percentile || "",
+        grade: data.tamgu2_grade || data.inquiry2_grade || "",
+      },
+    };
+  }
+
+  return null;
 }
