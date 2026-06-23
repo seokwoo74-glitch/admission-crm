@@ -71,7 +71,12 @@ export default function ConsultingPage() {
     student_name: "",
     school: "",
     grade: "",
+    student_phone: "",
+    parent_phone: "",
+    referral: "",
+    graduation_year: "",
     track: "",
+    school_type: "",
     overall_gpa: "",
     major_gpa: "",
     class_rank: "",
@@ -80,6 +85,7 @@ export default function ConsultingPage() {
     csat_plan: "",
     priority_after_final: "",
     strategy_type: "",
+    preferred_call_date: "",
     question: "",
     memo: "",
     june_scores: emptyScores,
@@ -91,6 +97,36 @@ export default function ConsultingPage() {
   useEffect(() => {
     if (id) loadData();
   }, [id]);
+
+  async function loadAdmissionDbAll() {
+    const pageSize = 1000;
+    let from = 0;
+    let allRows: UnivRow[] = [];
+
+    while (true) {
+      const { data, error } = await supabase
+        .from("admission_db")
+        .select(
+          "university, admission_type, track, department, quota, method, minimum_score, exam_date, competition_rate, cut_score, point"
+        )
+        .order("university", { ascending: true })
+        .range(from, from + pageSize - 1);
+
+      if (error) {
+        console.error(error);
+        break;
+      }
+
+      if (!data || data.length === 0) break;
+
+      allRows = [...allRows, ...(data as any)];
+
+      if (data.length < pageSize) break;
+      from += pageSize;
+    }
+
+    return allRows;
+  }
 
   async function loadData() {
     setLoading(true);
@@ -116,15 +152,8 @@ export default function ConsultingPage() {
       .limit(1)
       .maybeSingle();
 
-    const { data: dbRows, error: dbError } = await supabase
-      .from("admission_db")
-      .select(
-        "university, admission_type, track, department, quota, method, minimum_score, exam_date, competition_rate, cut_score, point"
-      )
-      .order("university", { ascending: true });
-
-    if (dbError) console.error(dbError);
-    setAdmissionRows((dbRows || []) as any);
+    const dbRows = await loadAdmissionDbAll();
+    setAdmissionRows(dbRows);
 
     const base = recordData || appData;
     setRecordId(recordData?.id || "");
@@ -133,7 +162,12 @@ export default function ConsultingPage() {
       student_name: base?.student_name || "",
       school: base?.school || "",
       grade: base?.grade || "",
+      student_phone: base?.student_phone || appData?.student_phone || "",
+      parent_phone: base?.parent_phone || appData?.parent_phone || "",
+      referral: base?.referral || appData?.referral || "",
+      graduation_year: base?.graduation_year || appData?.graduation_year || "",
       track: base?.track || "",
+      school_type: base?.school_type || appData?.school_type || "",
       overall_gpa: base?.overall_gpa || "",
       major_gpa: base?.major_gpa || "",
       class_rank: base?.class_rank || "",
@@ -142,6 +176,7 @@ export default function ConsultingPage() {
       csat_plan: base?.csat_plan || "",
       priority_after_final: base?.priority_after_final || "",
       strategy_type: base?.strategy_type || "",
+      preferred_call_date: base?.preferred_call_date || appData?.preferred_call_date || "",
       question: base?.question || "",
       memo: recordData?.memo || "",
 
@@ -194,14 +229,30 @@ export default function ConsultingPage() {
   function updateUniversity(index: number, field: keyof UnivRow, value: string) {
     setForm((prev: any) => {
       const next = [...prev.universities];
+
       next[index] = {
         ...next[index],
         [field]: value,
       };
 
-      const updated = autofillUniversity(next[index]);
+      if (field === "university") {
+        next[index].admission = "";
+        next[index].admission_type = "";
+        next[index].track = "";
+        next[index].department = "";
+      }
 
-      next[index] = updated;
+      if (field === "admission") {
+        next[index].admission_type = value;
+        next[index].track = "";
+        next[index].department = "";
+      }
+
+      if (field === "track") {
+        next[index].department = "";
+      }
+
+      next[index] = autofillUniversity(next[index]);
 
       return { ...prev, universities: next };
     });
@@ -215,6 +266,7 @@ export default function ConsultingPage() {
         {
           university: "",
           admission: "",
+          admission_type: "",
           track: "",
           department: "",
           quota: "",
@@ -278,7 +330,12 @@ export default function ConsultingPage() {
       school: form.school,
       grade: form.grade,
       student_grade: form.grade,
+      student_phone: form.student_phone,
+      parent_phone: form.parent_phone,
+      referral: form.referral,
+      graduation_year: form.graduation_year,
       track: form.track,
+      school_type: form.school_type,
       overall_gpa: form.overall_gpa,
       major_gpa: form.major_gpa,
       class_rank: form.class_rank,
@@ -287,6 +344,7 @@ export default function ConsultingPage() {
       csat_plan: form.csat_plan,
       priority_after_final: form.priority_after_final,
       strategy_type: form.strategy_type,
+      preferred_call_date: form.preferred_call_date,
       question: form.question,
       memo: form.memo,
       june_scores: form.june_scores,
@@ -328,21 +386,23 @@ export default function ConsultingPage() {
 
   if (loading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#f5f7f8]">
-        <p className="font-bold text-slate-500">불러오는 중...</p>
+      <main className="flex min-h-screen items-center justify-center bg-[#f3efe7]">
+        <div className="rounded-2xl border border-[#d9cdb8] bg-[#fffdf8] px-8 py-6 shadow-xl">
+          <p className="font-black text-[#071d35]">불러오는 중...</p>
+        </div>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-[#f5f7f8]">
-      <div className="sticky top-0 z-20 border-b border-slate-200 bg-white/95 backdrop-blur">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+    <main className="min-h-screen bg-[#f3efe7] text-[#111827]">
+      <div className="sticky top-0 z-20 border-b border-[#d9cdb8] bg-[#fffdf8]/95 backdrop-blur">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
           <div>
-            <p className="text-sm font-black text-[#03c75a]">
-              강성재교육연구소 AI 입시 CRM
+            <p className="text-xs font-bold tracking-[0.25em] text-[#8b6b35]">
+              KANG&apos;S EDU LAB
             </p>
-            <h1 className="mt-1 text-2xl font-black text-slate-900">
+            <h1 className="mt-2 text-3xl font-black text-[#071d35]">
               상담결과 작성
             </h1>
           </div>
@@ -351,7 +411,7 @@ export default function ConsultingPage() {
             <button
               type="button"
               onClick={() => router.push("/admin")}
-              className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-black text-slate-700"
+              className="rounded-xl border border-[#cfc2ab] bg-white px-4 py-2 text-sm font-black text-[#071d35] hover:bg-[#fffaf0]"
             >
               목록
             </button>
@@ -360,7 +420,7 @@ export default function ConsultingPage() {
               <button
                 type="button"
                 onClick={() => router.push(`/admin/results/${recordId}`)}
-                className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-black text-white"
+                className="rounded-xl bg-[#061a31] px-4 py-2 text-sm font-black text-white"
               >
                 결과보기
               </button>
@@ -370,7 +430,7 @@ export default function ConsultingPage() {
               type="button"
               onClick={saveResult}
               disabled={saving}
-              className="rounded-xl bg-[#03c75a] px-5 py-2 text-sm font-black text-white shadow-sm disabled:opacity-50"
+              className="rounded-xl bg-[#c89b55] px-5 py-2 text-sm font-black text-white shadow-md disabled:opacity-50"
             >
               {saving ? "저장 중..." : "저장하기"}
             </button>
@@ -378,19 +438,23 @@ export default function ConsultingPage() {
         </div>
       </div>
 
-      <div className="mx-auto grid max-w-7xl grid-cols-1 gap-6 px-6 py-6 lg:grid-cols-[280px_1fr]">
-        <aside className="h-fit rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="rounded-2xl bg-[#03c75a] p-5 text-white">
-            <p className="text-sm font-bold opacity-90">상담 학생</p>
+      <div className="mx-auto grid max-w-7xl grid-cols-1 gap-6 px-6 py-6 lg:grid-cols-[300px_1fr]">
+        <aside className="h-fit rounded-2xl border border-[#d9cdb8] bg-[#fffdf8] p-5 shadow-xl">
+          <div className="rounded-2xl bg-[#061a31] p-5 text-white">
+            <p className="text-sm font-bold text-[#d6ad67]">상담 학생</p>
             <h2 className="mt-2 text-3xl font-black">
               {form.student_name || "-"}
             </h2>
-            <p className="mt-2 text-sm font-bold opacity-90">
+            <p className="mt-2 text-sm font-bold text-white/80">
               {form.school || "-"} · {form.grade || "-"}
             </p>
           </div>
 
           <div className="mt-4 space-y-2">
+            <SideInfo label="학생 전화" value={form.student_phone} />
+            <SideInfo label="학부모 전화" value={form.parent_phone} />
+            <SideInfo label="소개자" value={form.referral} />
+            <SideInfo label="2차전화상담일" value={form.preferred_call_date} />
             <SideInfo label="계열" value={form.track} />
             <SideInfo label="전교과" value={form.overall_gpa} />
             <SideInfo label="주요교과" value={form.major_gpa} />
@@ -399,26 +463,38 @@ export default function ConsultingPage() {
         </aside>
 
         <div className="space-y-6">
-          <Card title="신청서 정보 수정" desc="상담 전 기본 정보를 확인하고 수정합니다.">
+          <Card number="01" title="신청서 정보 수정" desc="상담 전 기본 정보를 확인하고 수정합니다.">
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-              <Input label="학생 이름" value={form.student_name} onChange={(v: string) => updateField("student_name", v)} />
-              <Input label="학교" value={form.school} onChange={(v: string) => updateField("school", v)} />
-              <Input label="학년" value={form.grade} onChange={(v: string) => updateField("grade", v)} />
-              <Input label="계열" value={form.track} onChange={(v: string) => updateField("track", v)} />
-              <Input label="전교과 내신" value={form.overall_gpa} onChange={(v: string) => updateField("overall_gpa", v)} />
-              <Input label="주요교과 내신" value={form.major_gpa} onChange={(v: string) => updateField("major_gpa", v)} />
-              <Input label="전교 등수" value={form.class_rank} onChange={(v: string) => updateField("class_rank", v)} />
-              <Input label="주력전형" value={form.admission_type} onChange={(v: string) => updateField("admission_type", v)} />
-              <Input label="생기부 비교과 관리" value={form.extracurricular_needed} onChange={(v: string) => updateField("extracurricular_needed", v)} />
-              <Input label="수능대비" value={form.csat_plan} onChange={(v: string) => updateField("csat_plan", v)} />
-              <Input label="3-1 기말 후 최우선 순위" value={form.priority_after_final} onChange={(v: string) => updateField("priority_after_final", v)} />
-              <Input label="수시/정시 전략" value={form.strategy_type} onChange={(v: string) => updateField("strategy_type", v)} />
+              <Input label="학생 이름" value={form.student_name} onChange={(v) => updateField("student_name", v)} />
+              <Input label="학교" value={form.school} onChange={(v) => updateField("school", v)} />
+              <Input label="학년" value={form.grade} onChange={(v) => updateField("grade", v)} />
+
+              <Input label="학생 전화번호" value={form.student_phone} onChange={(v) => updateField("student_phone", v)} />
+              <Input label="학부모 전화번호" value={form.parent_phone} onChange={(v) => updateField("parent_phone", v)} />
+              <Input label="소개자" value={form.referral} onChange={(v) => updateField("referral", v)} />
+
+              <Input label="졸업년도" value={form.graduation_year} onChange={(v) => updateField("graduation_year", v)} />
+              <Input label="계열" value={form.track} onChange={(v) => updateField("track", v)} />
+              <Input label="학교유형" value={form.school_type} onChange={(v) => updateField("school_type", v)} />
+
+              <Input label="전교과 내신" value={form.overall_gpa} onChange={(v) => updateField("overall_gpa", v)} />
+              <Input label="주요교과 내신" value={form.major_gpa} onChange={(v) => updateField("major_gpa", v)} />
+              <Input label="전교 등수" value={form.class_rank} onChange={(v) => updateField("class_rank", v)} />
+
+              <Input label="주력전형" value={form.admission_type} onChange={(v) => updateField("admission_type", v)} />
+              <Input label="생기부 비교과 관리" value={form.extracurricular_needed} onChange={(v) => updateField("extracurricular_needed", v)} />
+              <Input label="수능대비" value={form.csat_plan} onChange={(v) => updateField("csat_plan", v)} />
+
+              <Input label="3-1 기말 후 최우선 순위" value={form.priority_after_final} onChange={(v) => updateField("priority_after_final", v)} />
+              <Input label="수시/정시 전략" value={form.strategy_type} onChange={(v) => updateField("strategy_type", v)} />
+              <Input label="2차전화상담일" value={form.preferred_call_date} onChange={(v) => updateField("preferred_call_date", v)} />
             </div>
           </Card>
 
           <Card
+            number="02"
             title="희망 대학 수정"
-            desc="대학/전형/계열/모집단위를 수정하면 admission_db 기준 경쟁률·컷·전형정보가 자동으로 다시 채워집니다."
+            desc="대학/전형/계열/모집단위를 수정하면 admission_db 기준 경쟁률·컷·전형정보가 자동으로 채워집니다."
           >
             <div className="space-y-5">
               {form.universities.map((u: UnivRow, i: number) => (
@@ -436,7 +512,7 @@ export default function ConsultingPage() {
               <button
                 type="button"
                 onClick={addUniversity}
-                className="w-full rounded-2xl border border-dashed border-[#03c75a] bg-[#f0fff7] px-4 py-4 text-sm font-black text-[#03a34b]"
+                className="w-full rounded-xl border border-dashed border-[#c89b55] bg-[#fffaf0] px-4 py-4 text-sm font-black text-[#8b6b35]"
               >
                 + 희망 대학 추가
               </button>
@@ -447,10 +523,10 @@ export default function ConsultingPage() {
           <ScoreSection title="9월 모의고사 목표" exam="september_scores" scores={form.september_scores} updateScore={updateScore} />
           <ScoreSection title="11월 수능 목표" exam="november_scores" scores={form.november_scores} updateScore={updateScore} />
 
-          <Card title="상담 질문 / 상담 메모" desc="학생 질문과 최종 상담 내용을 기록합니다.">
+          <Card number="06" title="상담 질문 / 상담 메모" desc="학생 질문과 최종 상담 내용을 기록합니다.">
             <div className="grid grid-cols-1 gap-4">
-              <TextArea label="상담 질문" value={form.question} onChange={(v: string) => updateField("question", v)} />
-              <TextArea label="상담 메모" value={form.memo} onChange={(v: string) => updateField("memo", v)} tall />
+              <TextArea label="상담 질문" value={form.question} onChange={(v) => updateField("question", v)} />
+              <TextArea label="상담 메모" value={form.memo} onChange={(v) => updateField("memo", v)} tall />
             </div>
           </Card>
 
@@ -459,7 +535,7 @@ export default function ConsultingPage() {
               <button
                 type="button"
                 onClick={() => router.push(`/admin/results/${recordId}`)}
-                className="rounded-2xl bg-slate-900 px-6 py-4 font-black text-white"
+                className="rounded-xl bg-[#061a31] px-6 py-4 font-black text-white"
               >
                 상담결과보기
               </button>
@@ -469,7 +545,7 @@ export default function ConsultingPage() {
               type="button"
               onClick={saveResult}
               disabled={saving}
-              className="rounded-2xl bg-[#03c75a] px-8 py-4 font-black text-white shadow-sm disabled:opacity-50"
+              className="rounded-xl bg-[#c89b55] px-8 py-4 font-black text-white shadow-lg disabled:opacity-50"
             >
               {saving ? "저장 중..." : "상담결과 저장"}
             </button>
@@ -523,49 +599,26 @@ function UniversityEditor({
   );
 
   return (
-    <div className="rounded-[24px] border border-slate-200 bg-white p-5">
+    <div className="rounded-2xl border border-[#ded2bd] bg-[#fffaf0] p-5">
       <div className="mb-4 flex items-center justify-between">
-        <h3 className="text-lg font-black text-slate-900">
+        <h3 className="text-lg font-black text-[#071d35]">
           희망 대학 {index + 1}
         </h3>
 
         <button
           type="button"
           onClick={() => removeUniversity(index)}
-          className="rounded-xl bg-red-50 px-3 py-2 text-xs font-black text-red-600"
+          className="rounded-lg bg-red-50 px-3 py-2 text-xs font-black text-red-600"
         >
           삭제
         </button>
       </div>
 
       <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
-        <Select
-          label="대학"
-          value={row.university}
-          options={universityOptions}
-          onChange={(v: string) => updateUniversity(index, "university", v)}
-        />
-
-        <Select
-          label="전형"
-          value={row.admission || row.admission_type || ""}
-          options={admissionOptions}
-          onChange={(v: string) => updateUniversity(index, "admission", v)}
-        />
-
-        <Select
-          label="계열"
-          value={row.track}
-          options={trackOptions}
-          onChange={(v: string) => updateUniversity(index, "track", v)}
-        />
-
-        <Select
-          label="모집단위"
-          value={row.department}
-          options={departmentOptions}
-          onChange={(v: string) => updateUniversity(index, "department", v)}
-        />
+        <Select label="대학" value={row.university} options={universityOptions} onChange={(v) => updateUniversity(index, "university", v)} />
+        <Select label="전형" value={row.admission || row.admission_type || ""} options={admissionOptions} onChange={(v) => updateUniversity(index, "admission", v)} />
+        <Select label="계열" value={row.track} options={trackOptions} onChange={(v) => updateUniversity(index, "track", v)} />
+        <Select label="모집단위" value={row.department} options={departmentOptions} onChange={(v) => updateUniversity(index, "department", v)} />
       </div>
 
       <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-4">
@@ -598,33 +651,34 @@ function ScoreSection({
   scores: ScoreSet;
   updateScore: (exam: ExamKey, key: ScoreKey, field: string, value: string) => void;
 }) {
+  const number =
+    exam === "june_scores" ? "03" : exam === "september_scores" ? "04" : "05";
+
   return (
-    <Card title={title} desc="선택과목, 원점수, 백분위, 등급을 입력합니다.">
-      <div className="overflow-hidden rounded-2xl border border-slate-200">
+    <Card number={number} title={title} desc="선택과목, 원점수, 백분위, 등급을 입력합니다.">
+      <div className="overflow-hidden rounded-2xl border border-[#ded2bd]">
         <table className="w-full text-sm">
-          <thead className="bg-[#f0fff7] text-slate-700">
+          <thead className="bg-[#061a31] text-white">
             <tr>
-              <th className="border border-slate-200 p-3">과목</th>
-              <th className="border border-slate-200 p-3">선택과목</th>
-              <th className="border border-slate-200 p-3">원점수</th>
-              <th className="border border-slate-200 p-3">백분위</th>
-              <th className="border border-slate-200 p-3">등급</th>
+              <th className="p-3">과목</th>
+              <th className="p-3">선택과목</th>
+              <th className="p-3">원점수</th>
+              <th className="p-3">백분위</th>
+              <th className="p-3">등급</th>
             </tr>
           </thead>
           <tbody>
             {scoreKeys.map((key) => (
-              <tr key={key}>
-                <td className="border border-slate-200 bg-white p-3 text-center font-black">
+              <tr key={key} className="bg-[#fffaf0]">
+                <td className="border-t border-[#ded2bd] p-3 text-center font-black text-[#071d35]">
                   {scoreLabels[key]}
                 </td>
                 {["choice", "score", "percentile", "grade"].map((field) => (
-                  <td key={field} className="border border-slate-200 p-2">
+                  <td key={field} className="border-t border-[#ded2bd] p-2">
                     <input
                       value={(scores as any)?.[key]?.[field] || ""}
-                      onChange={(e) =>
-                        updateScore(exam, key, field, e.target.value)
-                      }
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-center outline-none focus:border-[#03c75a] focus:bg-white"
+                      onChange={(e) => updateScore(exam, key, field, e.target.value)}
+                      className="w-full rounded-lg border border-[#cfc2ab] bg-white px-3 py-2 text-center font-bold outline-none focus:border-[#b78b45] focus:ring-2 focus:ring-[#d6ad67]/25"
                     />
                   </td>
                 ))}
@@ -638,64 +692,50 @@ function ScoreSection({
 }
 
 function Card({
+  number,
   title,
   desc,
   children,
 }: {
+  number: string;
   title: string;
   desc: string;
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+    <section className="rounded-2xl border border-[#d9cdb8] bg-[#fffdf8] p-6 shadow-xl">
       <div className="mb-5">
-        <h2 className="text-xl font-black text-slate-900">{title}</h2>
-        <p className="mt-1 text-sm font-medium text-slate-500">{desc}</p>
+        <h2 className="text-2xl font-black text-[#071d35]">
+          <span className="text-[#8b6b35]">{number}.</span> {title}
+        </h2>
+        <p className="mt-1 text-sm font-semibold text-[#5f5a52]">{desc}</p>
       </div>
       {children}
     </section>
   );
 }
 
-function Input({
-  label,
-  value,
-  onChange,
-}: {
-  label: string;
-  value: any;
-  onChange: (v: string) => void;
-}) {
+function Input({ label, value, onChange }: { label: string; value: any; onChange: (v: string) => void }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-sm font-black text-slate-700">{label}</span>
+      <span className="mb-1 block text-sm font-black text-[#172b43]">{label}</span>
       <input
         value={value || ""}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold outline-none focus:border-[#03c75a] focus:bg-white"
+        className="w-full rounded-lg border border-[#cfc2ab] bg-white px-4 py-3 text-sm font-bold outline-none focus:border-[#b78b45] focus:ring-2 focus:ring-[#d6ad67]/25"
       />
     </label>
   );
 }
 
-function Select({
-  label,
-  value,
-  options,
-  onChange,
-}: {
-  label: string;
-  value: any;
-  options: string[];
-  onChange: (v: string) => void;
-}) {
+function Select({ label, value, options, onChange }: { label: string; value: any; options: string[]; onChange: (v: string) => void }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-sm font-black text-slate-700">{label}</span>
+      <span className="mb-1 block text-sm font-black text-[#172b43]">{label}</span>
       <select
         value={value || ""}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold outline-none focus:border-[#03c75a] focus:bg-white"
+        className="w-full rounded-lg border border-[#cfc2ab] bg-white px-4 py-3 text-sm font-bold outline-none focus:border-[#b78b45] focus:ring-2 focus:ring-[#d6ad67]/25"
       >
         <option value="">선택</option>
         {options.filter(Boolean).map((op) => (
@@ -708,24 +748,14 @@ function Select({
   );
 }
 
-function TextArea({
-  label,
-  value,
-  onChange,
-  tall,
-}: {
-  label: string;
-  value: any;
-  onChange: (v: string) => void;
-  tall?: boolean;
-}) {
+function TextArea({ label, value, onChange, tall }: { label: string; value: any; onChange: (v: string) => void; tall?: boolean }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-sm font-black text-slate-700">{label}</span>
+      <span className="mb-1 block text-sm font-black text-[#172b43]">{label}</span>
       <textarea
         value={value || ""}
         onChange={(e) => onChange(e.target.value)}
-        className={`w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-7 outline-none focus:border-[#03c75a] focus:bg-white ${
+        className={`w-full rounded-lg border border-[#cfc2ab] bg-white px-4 py-3 text-sm leading-7 outline-none focus:border-[#b78b45] focus:ring-2 focus:ring-[#d6ad67]/25 ${
           tall ? "min-h-[180px]" : "min-h-[100px]"
         }`}
       />
@@ -735,18 +765,18 @@ function TextArea({
 
 function SideInfo({ label, value }: { label: string; value: any }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-      <p className="text-xs font-black text-slate-400">{label}</p>
-      <p className="mt-1 text-lg font-black text-slate-900">{value || "-"}</p>
+    <div className="rounded-xl border border-[#ded2bd] bg-[#fffaf0] p-4">
+      <p className="text-xs font-black text-[#8b6b35]">{label}</p>
+      <p className="mt-1 text-base font-black text-[#071d35]">{value || "-"}</p>
     </div>
   );
 }
 
 function ReadonlyInfo({ label, value }: { label: string; value: any }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-      <p className="text-xs font-black text-slate-400">{label}</p>
-      <p className="mt-2 whitespace-pre-wrap text-sm font-bold text-slate-800">
+    <div className="rounded-xl border border-[#ded2bd] bg-white p-4">
+      <p className="text-xs font-black text-[#8b6b35]">{label}</p>
+      <p className="mt-2 whitespace-pre-wrap text-sm font-bold text-[#172b43]">
         {value !== undefined && value !== null && value !== "" ? value : "-"}
       </p>
     </div>
@@ -783,13 +813,7 @@ function normalizeScores(raw: any): ScoreSet | null {
   const data = safeObj(raw);
   if (!data) return null;
 
-  if (
-    data.korean ||
-    data.math ||
-    data.english ||
-    data.inquiry1 ||
-    data.inquiry2
-  ) {
+  if (data.korean || data.math || data.english || data.inquiry1 || data.inquiry2) {
     return {
       korean: { ...emptyScores.korean, ...(data.korean || {}) },
       math: { ...emptyScores.math, ...(data.math || {}) },
@@ -800,47 +824,49 @@ function normalizeScores(raw: any): ScoreSet | null {
   }
 
   if (
-    data.korean_score !== undefined ||
-    data.math_score !== undefined ||
-    data.english_grade !== undefined ||
-    data.tamgu1_score !== undefined ||
-    data.tamgu2_score !== undefined
+    data.koreanSubject !== undefined ||
+    data.koreanScore !== undefined ||
+    data.mathSubject !== undefined ||
+    data.mathScore !== undefined ||
+    data.englishGrade !== undefined ||
+    data.inquiry1Subject !== undefined ||
+    data.inquiry2Subject !== undefined
   ) {
     return {
       korean: {
         subject: "국어",
-        choice: data.korean_type || "",
-        score: data.korean_score || "",
-        percentile: data.korean_percentile || "",
-        grade: data.korean_grade || "",
+        choice: data.koreanSubject || "",
+        score: data.koreanScore || "",
+        percentile: data.koreanPercentile || "",
+        grade: data.koreanGrade || "",
       },
       math: {
         subject: "수학",
-        choice: data.math_type || "",
-        score: data.math_score || "",
-        percentile: data.math_percentile || "",
-        grade: data.math_grade || "",
+        choice: data.mathSubject || "",
+        score: data.mathScore || "",
+        percentile: data.mathPercentile || "",
+        grade: data.mathGrade || "",
       },
       english: {
         subject: "영어",
         choice: "",
-        score: data.english_score || "",
-        percentile: data.english_percentile || "",
-        grade: data.english_grade || "",
+        score: "",
+        percentile: "",
+        grade: data.englishGrade || "",
       },
       inquiry1: {
         subject: "탐구1",
-        choice: data.tamgu1_type || data.inquiry1_type || "",
-        score: data.tamgu1_score || data.inquiry1_score || "",
-        percentile: data.tamgu1_percentile || data.inquiry1_percentile || "",
-        grade: data.tamgu1_grade || data.inquiry1_grade || "",
+        choice: data.inquiry1Subject || "",
+        score: data.inquiry1Score || "",
+        percentile: data.inquiry1Percentile || "",
+        grade: data.inquiry1Grade || "",
       },
       inquiry2: {
         subject: "탐구2",
-        choice: data.tamgu2_type || data.inquiry2_type || "",
-        score: data.tamgu2_score || data.inquiry2_score || "",
-        percentile: data.tamgu2_percentile || data.inquiry2_percentile || "",
-        grade: data.tamgu2_grade || data.inquiry2_grade || "",
+        choice: data.inquiry2Subject || "",
+        score: data.inquiry2Score || "",
+        percentile: data.inquiry2Percentile || "",
+        grade: data.inquiry2Grade || "",
       },
     };
   }
