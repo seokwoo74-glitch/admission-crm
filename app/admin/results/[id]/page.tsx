@@ -212,13 +212,12 @@ export default function ResultPage() {
 
           @page {
             size: A4;
-            margin: 7mm;
+            margin: 2mm;
           }
 
-          .report-page {
-            min-height: 282mm;
-            page-break-after: always;
-          }
+         .report-page {
+  page-break-after: auto;
+}
 
           .report-page:last-child {
             page-break-after: auto;
