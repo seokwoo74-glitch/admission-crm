@@ -368,98 +368,67 @@ export default function ResultPage() {
                   <table className="w-full border-collapse text-sm print:text-[11px]">
                     <thead className="bg-[#061a31] text-white">
                       <tr>
-                        <th className="px-2 py-3">번호</th>
-                        <th className="px-2 py-3">대학</th>
-                        <th className="px-2 py-3">전형</th>
-                        <th className="px-2 py-3">계열</th>
-                        <th className="px-2 py-3">모집단위</th>
-                        <th className="px-2 py-3 text-right">경쟁률</th>
-                        <th className="px-2 py-3 text-right">내신컷</th>
-                      </tr>
+  <th className="px-2 py-3">번호</th>
+  <th className="px-2 py-3">대학</th>
+  <th className="px-2 py-3">전형</th>
+  <th className="px-2 py-3">계열</th>
+  <th className="px-2 py-3">모집단위</th>
+  <th className="px-2 py-3">모집인원</th>
+  <th className="px-2 py-3">수능최저</th>
+  <th className="px-2 py-3">전형방법</th>
+  <th className="px-2 py-3">면접/고사일</th>
+  <th className="px-2 py-3">특이사항</th>
+  <th className="px-2 py-3 text-right">경쟁률</th>
+  <th className="px-2 py-3 text-right">내신컷</th>
+</tr>
                     </thead>
                     <tbody>
                       {universities.map((u: any, i: number) => (
                         <tr key={i} className="bg-[#fffaf0] text-center">
-                          <td className="border-t border-[#ded2bd] px-2 py-3 font-black text-[#8b6b35]">
-                            {i + 1}
-                          </td>
-                          <td className="border-t border-[#ded2bd] px-2 py-3 font-black text-[#071d35]">
-                            {showValue(u.university)}
-                          </td>
-                          <td className="border-t border-[#ded2bd] px-2 py-3 font-bold">
-                            {showValue(u.admission || u.admission_type)}
-                          </td>
-                          <td className="border-t border-[#ded2bd] px-2 py-3 font-bold">
-                            {showValue(u.track)}
-                          </td>
-                          <td className="border-t border-[#ded2bd] px-2 py-3 font-bold">
-                            {showValue(u.department)}
-                          </td>
-                          <td className="border-t border-[#ded2bd] px-2 py-3 text-right font-black tabular-nums text-[#071d35]">
-                            {formatDecimal(u.competition_rate)}
-                          </td>
-                          <td className="border-t border-[#ded2bd] px-2 py-3 text-right font-black tabular-nums text-[#071d35]">
-                            {formatDecimal(u.cut_score)}
-                          </td>
-                        </tr>
+  <td className="border-t border-[#ded2bd] px-2 py-3 font-black text-[#8b6b35]">
+    {i + 1}
+  </td>
+  <td className="border-t border-[#ded2bd] px-2 py-3 font-black text-[#071d35]">
+    {showValue(u.university)}
+  </td>
+  <td className="border-t border-[#ded2bd] px-2 py-3 font-bold">
+    {showValue(u.admission || u.admission_type)}
+  </td>
+  <td className="border-t border-[#ded2bd] px-2 py-3 font-bold">
+    {showValue(u.track)}
+  </td>
+  <td className="border-t border-[#ded2bd] px-2 py-3 font-bold">
+    {showValue(u.department)}
+  </td>
+  <td className="border-t border-[#ded2bd] px-2 py-3 font-bold">
+    {showValue(u.quota)}
+  </td>
+  <td className="border-t border-[#ded2bd] px-2 py-3 text-left text-xs font-bold leading-5">
+    {showValue(u.minimum_score)}
+  </td>
+  <td className="border-t border-[#ded2bd] px-2 py-3 text-left text-xs font-bold leading-5">
+    {showValue(u.method)}
+  </td>
+  <td className="border-t border-[#ded2bd] px-2 py-3 text-left text-xs font-bold leading-5">
+    {showValue(u.exam_date)}
+  </td>
+  <td className="border-t border-[#ded2bd] px-2 py-3 text-left text-xs font-bold leading-5">
+    {showValue(u.point)}
+  </td>
+  <td className="border-t border-[#ded2bd] px-2 py-3 text-right font-black tabular-nums text-[#071d35]">
+    {formatDecimal(u.competition_rate)}
+  </td>
+  <td className="border-t border-[#ded2bd] px-2 py-3 text-right font-black tabular-nums text-[#071d35]">
+    {formatDecimal(u.cut_score)}
+  </td>
+</tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
 
-                <div className="mt-4 space-y-3 print:hidden">
-                  {universities.map((u: any, i: number) => (
-                    <div key={i} className="rounded-2xl border border-[#ded2bd] bg-white p-4">
-                      <p className="text-sm font-black text-[#071d35]">
-                        {i + 1}. {showValue(u.university)} · {showValue(u.department)}
-                      </p>
-                      <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
-                        <Detail label="모집인원" value={u.quota} />
-                        <Detail label="수능최저" value={u.minimum_score} />
-                        <Detail label="전형방법" value={u.method} />
-                        <Detail label="면접/고사일" value={u.exam_date} />
-                      </div>
-                      <div className="mt-3">
-                        <Detail label="특이사항" value={u.point} />
-                      </div>
-                    </div>
-                  ))}
-                </div>
 
-                <div className="mt-4 hidden print:block">
-                  <table className="w-full border-collapse text-[10px]">
-                    <thead className="bg-[#fffaf0] text-[#071d35]">
-                      <tr>
-                        <th className="border border-[#ded2bd] px-2 py-2">대학/모집단위</th>
-                        <th className="border border-[#ded2bd] px-2 py-2">모집인원</th>
-                        <th className="border border-[#ded2bd] px-2 py-2">수능최저</th>
-                        <th className="border border-[#ded2bd] px-2 py-2">전형방법</th>
-                        <th className="border border-[#ded2bd] px-2 py-2">특이사항</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {universities.slice(0, 9).map((u: any, i: number) => (
-                        <tr key={i}>
-                          <td className="border border-[#ded2bd] px-2 py-2 font-bold">
-                            {i + 1}. {showValue(u.university)} / {showValue(u.department)}
-                          </td>
-                          <td className="border border-[#ded2bd] px-2 py-2 text-center">
-                            {showValue(u.quota)}
-                          </td>
-                          <td className="border border-[#ded2bd] px-2 py-2">
-                            {showValue(u.minimum_score)}
-                          </td>
-                          <td className="border border-[#ded2bd] px-2 py-2">
-                            {showValue(u.method)}
-                          </td>
-                          <td className="border border-[#ded2bd] px-2 py-2">
-                            {showValue(u.point)}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+
               </ReportCard>
             )}
 
