@@ -305,20 +305,30 @@ export default function ConsultingPage() {
     if (!found) return row;
 
     return {
-      ...row,
-      university: found.university || row.university,
-      admission: found.admission_type || row.admission || "",
-      admission_type: found.admission_type || row.admission_type || "",
-      track: found.track || row.track || "",
-      department: found.department || row.department,
-      quota: found.quota ?? "",
-      method: found.method ?? "",
-      minimum_score: found.minimum_score ?? "",
-      exam_date: found.exam_date ?? "",
-      competition_rate: found.competition_rate ?? "",
-      cut_score: found.cut_score ?? "",
-      point: found.point ?? "",
-    };
+  ...row,
+  university: found.university || row.university,
+  admission: found.admission_type || row.admission || "",
+  admission_type: found.admission_type || row.admission_type || "",
+  track: found.track || row.track || "",
+  department: found.department || row.department,
+
+  quota: found.quota ?? "",
+  method: found.method ?? "",
+  minimum_score: found.minimum_score ?? "",
+  exam_date: found.exam_date ?? "",
+
+  competition_rate:
+    found.competition_rate != null
+      ? Number(found.competition_rate).toFixed(2)
+      : "",
+
+  cut_score:
+    found.cut_score != null
+      ? Number(found.cut_score).toFixed(2)
+      : "",
+
+  point: found.point ?? "",
+};
   }
 
   async function saveResult() {
