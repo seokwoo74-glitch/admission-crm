@@ -36,6 +36,7 @@ type UnivRow = {
   competition_rate?: string | number;
   cut_score?: string | number;
   point?: string;
+  previous_change?: string;
 };
 
 const scoreKeys: ScoreKey[] = ["korean", "math", "english", "inquiry1", "inquiry2"];
@@ -107,7 +108,7 @@ export default function ConsultingPage() {
       const { data, error } = await supabase
         .from("admission_db")
         .select(
-          "university, admission_type, track, department, quota, method, minimum_score, exam_date, competition_rate, cut_score, point"
+          "university, admission_type, track, department, quota, previous_change, method, minimum_score, exam_date, competition_rate, cut_score, point"
         )
         .order("university", { ascending: true })
         .range(from, from + pageSize - 1);
@@ -312,7 +313,12 @@ export default function ConsultingPage() {
   track: found.track || row.track || "",
   department: found.department || row.department,
 
-  quota: found.quota ?? "",
+  quota:
+  found.previous_change
+    ? `${found.quota ?? ""}명 (${found.previous_change})`
+    : found.quota
+      ? `${found.quota}명`
+      : "",
   method: found.method ?? "",
   minimum_score: found.minimum_score ?? "",
   exam_date: found.exam_date ?? "",
