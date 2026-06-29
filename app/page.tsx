@@ -342,7 +342,7 @@ export default function HomePage() {
             <Select label="3-1 기말 후 최우선 순위" value={priorityAfterFinal} setValue={setPriorityAfterFinal} options={["생기부", "수능대비", "논술", "면접"]} />
             <Select label="수시/정시 전략" value={strategyType} setValue={setStrategyType} options={["수시에 끝낸다", "정시까지 고려", "상담 후 결정"]} />
 
-            <Input label="2차전화상담일" value={preferredCallDate} setValue={setPreferredCallDate} placeholder="예) 9월 4,5,6 중 택1" />
+            <Input label="2차전화상담일" value={preferredCallDate} setValue={setPreferredCallDate} placeholder="9월 4,5,6 중 택1" />
           </div>
 
           <Divider />
