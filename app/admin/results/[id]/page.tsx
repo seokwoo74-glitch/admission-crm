@@ -215,21 +215,17 @@ export default function ResultPage() {
             margin: 2mm;
           }
 
-         .report-page {
-  page-break-after: auto;
-}
-
-          .report-page:last-child {
+          .report-page {
             page-break-after: auto;
+          }
+
+          .calendar-page {
+            page-break-before: always;
           }
 
           .break-inside-avoid {
             break-inside: avoid;
             page-break-inside: avoid;
-          }
-
-          .print-compact {
-            padding: 14px !important;
           }
 
           .print-hide {
@@ -328,24 +324,9 @@ export default function ResultPage() {
 
             <ReportCard number="02" title="성적 및 목표 관리">
               <div className="grid grid-cols-1 gap-4 print:gap-3">
-                <GoalBlock
-                  title="6월 모의고사 성적"
-                  desc="현재 기준 학생의 모의고사 성적입니다."
-                  scores={juneScores}
-                  badge="현재 성적"
-                />
-                <GoalBlock
-                  title="9월 모의고사 목표"
-                  desc="수시 지원 전 최종 점검용 목표 성적입니다."
-                  scores={septemberScores}
-                  badge="9월 목표"
-                />
-                <GoalBlock
-                  title="11월 수능 목표"
-                  desc="최종 수능 기준 목표 성적입니다."
-                  scores={novemberScores}
-                  badge="수능 목표"
-                />
+                <GoalBlock title="6월 모의고사 성적" desc="현재 기준 학생의 모의고사 성적입니다." scores={juneScores} badge="현재 성적" />
+                <GoalBlock title="9월 모의고사 목표" desc="수시 지원 전 최종 점검용 목표 성적입니다." scores={septemberScores} badge="9월 목표" />
+                <GoalBlock title="11월 수능 목표" desc="최종 수능 기준 목표 성적입니다." scores={novemberScores} badge="수능 목표" />
               </div>
             </ReportCard>
           </div>
@@ -364,79 +345,50 @@ export default function ResultPage() {
                 </div>
 
                 <div className="overflow-hidden rounded-2xl border border-[#ded2bd]">
-                  <table className="w-full border-collapse text-sm print:text-[11px]">
+                  <table className="w-full border-collapse text-sm print:text-[9px]">
                     <thead className="bg-[#061a31] text-white">
                       <tr>
-  <th className="px-2 py-3">번호</th>
-  <th className="px-2 py-3">대학</th>
-  <th className="px-2 py-3">전형</th>
-  <th className="px-2 py-3">계열</th>
-  <th className="px-2 py-3">모집단위</th>
-  <th className="px-2 py-3">모집인원</th>
-  <th className="px-2 py-3">수능최저</th>
-  <th className="px-2 py-3">전형방법</th>
-  <th className="px-2 py-3">면접/고사일</th>
-  <th className="px-2 py-3">특이사항</th>
-  <th className="px-2 py-3 text-right">경쟁률</th>
-  <th className="px-2 py-3 text-right">내신컷</th>
-</tr>
+                        <th className="px-2 py-3">번호</th>
+                        <th className="px-2 py-3">대학</th>
+                        <th className="px-2 py-3">전형</th>
+                        <th className="px-2 py-3">계열</th>
+                        <th className="px-2 py-3">모집단위</th>
+                        <th className="px-2 py-3">모집인원</th>
+                        <th className="px-2 py-3">수능최저</th>
+                        <th className="px-2 py-3">전형방법</th>
+                        <th className="px-2 py-3">면접/고사일</th>
+                        <th className="px-2 py-3">특이사항</th>
+                        <th className="px-2 py-3 text-right">경쟁률</th>
+                        <th className="px-2 py-3 text-right">내신컷</th>
+                      </tr>
                     </thead>
                     <tbody>
                       {universities.map((u: any, i: number) => (
                         <tr key={i} className="bg-[#fffaf0] text-center">
-  <td className="border-t border-[#ded2bd] px-2 py-3 font-black text-[#8b6b35]">
-    {i + 1}
-  </td>
-  <td className="border-t border-[#ded2bd] px-2 py-3 font-black text-[#071d35]">
-    {showValue(u.university)}
-  </td>
-  <td className="border-t border-[#ded2bd] px-2 py-3 font-bold">
-    {showValue(u.admission || u.admission_type)}
-  </td>
-  <td className="border-t border-[#ded2bd] px-2 py-3 font-bold">
-    {showValue(u.track)}
-  </td>
-  <td className="border-t border-[#ded2bd] px-2 py-3 font-bold">
-    {showValue(u.department)}
-  </td>
-  <td className="border-t border-[#ded2bd] px-2 py-3 font-bold">
-    {showValue(u.quota)}
-  </td>
-  <td className="border-t border-[#ded2bd] px-2 py-3 text-left text-xs font-bold leading-5">
-    {showValue(u.minimum_score)}
-  </td>
-  <td className="border-t border-[#ded2bd] px-2 py-3 text-left text-xs font-bold leading-5">
-    {showValue(u.method)}
-  </td>
-  <td className="border-t border-[#ded2bd] px-2 py-3 text-left text-xs font-bold leading-5">
-    {showValue(u.exam_date)}
-  </td>
-  <td className="border-t border-[#ded2bd] px-2 py-3 text-left text-xs font-bold leading-5">
-    {showValue(u.point)}
-  </td>
-  <td className="border-t border-[#ded2bd] px-2 py-3 text-right font-black tabular-nums text-[#071d35]">
-    {formatDecimal(u.competition_rate)}
-  </td>
-  <td className="border-t border-[#ded2bd] px-2 py-3 text-right font-black tabular-nums text-[#071d35]">
-    {formatDecimal(u.cut_score)}
-  </td>
-</tr>
+                          <td className="border-t border-[#ded2bd] px-2 py-3 font-black text-[#8b6b35]">{i + 1}</td>
+                          <td className="border-t border-[#ded2bd] px-2 py-3 font-black text-[#071d35]">{showValue(u.university)}</td>
+                          <td className="border-t border-[#ded2bd] px-2 py-3 font-bold">{showValue(u.admission || u.admission_type)}</td>
+                          <td className="border-t border-[#ded2bd] px-2 py-3 font-bold">{showValue(u.track)}</td>
+                          <td className="border-t border-[#ded2bd] px-2 py-3 font-bold">{showValue(u.department)}</td>
+                          <td className="border-t border-[#ded2bd] px-2 py-3 font-bold">{showValue(u.quota)}</td>
+                          <td className="border-t border-[#ded2bd] px-2 py-3 text-left text-xs font-bold leading-5 print:text-[8px]">{showValue(u.minimum_score)}</td>
+                          <td className="border-t border-[#ded2bd] px-2 py-3 text-left text-xs font-bold leading-5 print:text-[8px]">{showValue(u.method)}</td>
+                          <td className="border-t border-[#ded2bd] px-2 py-3 text-left text-xs font-bold leading-5 print:text-[8px]">{showValue(u.exam_date)}</td>
+                          <td className="border-t border-[#ded2bd] px-2 py-3 text-left text-xs font-bold leading-5 print:text-[8px]">{showValue(u.point)}</td>
+                          <td className="border-t border-[#ded2bd] px-2 py-3 text-right font-black tabular-nums text-[#071d35]">{formatDecimal(u.competition_rate)}</td>
+                          <td className="border-t border-[#ded2bd] px-2 py-3 text-right font-black tabular-nums text-[#071d35]">{formatDecimal(u.cut_score)}</td>
+                        </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
-
-
-
               </ReportCard>
             )}
 
             {record.memo && (
               <ReportCard number="04" title="최종 상담 코멘트">
                 <div className="rounded-2xl border border-[#ded2bd] bg-[#fffaf0] p-6 print:p-4">
-                  <p className="mb-3 text-sm font-black text-[#8b6b35]">
-                    Counselor Comment
-                  </p>
+                  <p className="mb-3 text-sm font-black text-[#8b6b35]">Counselor Comment</p>
                   <div className="whitespace-pre-wrap text-sm font-medium leading-8 text-[#3f3a32] print:text-xs print:leading-6">
                     {record.memo}
                   </div>
@@ -444,9 +396,7 @@ export default function ResultPage() {
               </ReportCard>
             )}
 
-            {(record.ai_comment ||
-              record.ai_recommendation ||
-              record.ai_university_analysis) && (
+            {(record.ai_comment || record.ai_recommendation || record.ai_university_analysis) && (
               <ReportCard number="AI" title="AI 분석 결과">
                 <div className="space-y-4">
                   {record.ai_comment && <AiBox title="AI 종합 코멘트" text={record.ai_comment} />}
@@ -463,6 +413,8 @@ export default function ResultPage() {
             </footer>
           </div>
         </div>
+
+        <AdmissionCalendarPage />
       </div>
     </main>
   );
@@ -471,9 +423,7 @@ export default function ResultPage() {
 function SectionTitle({ title, desc }: { title: string; desc: string }) {
   return (
     <div>
-      <p className="text-xs font-bold tracking-[0.25em] text-[#8b6b35]">
-        ADMISSION REPORT
-      </p>
+      <p className="text-xs font-bold tracking-[0.25em] text-[#8b6b35]">ADMISSION REPORT</p>
       <h2 className="mt-1 text-2xl font-black text-[#071d35] print:text-xl">{title}</h2>
       <p className="mt-1 text-sm font-semibold text-[#5f5a52] print:text-xs">{desc}</p>
     </div>
@@ -536,21 +486,11 @@ function ScoreTable({ scores }: { scores: ScoreItem[] }) {
         <tbody>
           {scores.map((s, i) => (
             <tr key={i} className="bg-[#fffaf0] text-center">
-              <td className="border-t border-[#ded2bd] px-2 py-2 font-black text-[#071d35]">
-                {showValue(s.subject)}
-              </td>
-              <td className="border-t border-[#ded2bd] px-2 py-2 font-bold">
-                {showValue(s.choice)}
-              </td>
-              <td className="border-t border-[#ded2bd] px-2 py-2 font-bold">
-                {showValue(s.score)}
-              </td>
-              <td className="border-t border-[#ded2bd] px-2 py-2 font-bold">
-                {showValue(s.percentile)}
-              </td>
-              <td className="border-t border-[#ded2bd] px-2 py-2 font-black text-[#8b6b35]">
-                {showValue(s.grade)}
-              </td>
+              <td className="border-t border-[#ded2bd] px-2 py-2 font-black text-[#071d35]">{showValue(s.subject)}</td>
+              <td className="border-t border-[#ded2bd] px-2 py-2 font-bold">{showValue(s.choice)}</td>
+              <td className="border-t border-[#ded2bd] px-2 py-2 font-bold">{showValue(s.score)}</td>
+              <td className="border-t border-[#ded2bd] px-2 py-2 font-bold">{showValue(s.percentile)}</td>
+              <td className="border-t border-[#ded2bd] px-2 py-2 font-black text-[#8b6b35]">{showValue(s.grade)}</td>
             </tr>
           ))}
         </tbody>
@@ -586,24 +526,107 @@ function MiniMetric({ label, value }: { label: string; value: any }) {
   );
 }
 
-function Detail({ label, value }: { label: string; value: any }) {
-  return (
-    <div className="rounded-xl bg-[#fffaf0] p-3">
-      <p className="text-xs font-black text-[#8b6b35]">{label}</p>
-      <p className="mt-1 whitespace-pre-wrap text-sm font-bold text-[#071d35]">
-        {showValue(value)}
-      </p>
-    </div>
-  );
-}
-
 function AiBox({ title, text }: { title: string; text: string }) {
   return (
     <div className="rounded-2xl border border-[#ded2bd] bg-[#fffaf0] p-5">
       <h3 className="mb-2 text-sm font-black text-[#071d35]">{title}</h3>
-      <div className="whitespace-pre-wrap text-sm leading-8 text-[#3f3a32]">
-        {text}
-      </div>
+      <div className="whitespace-pre-wrap text-sm leading-8 text-[#3f3a32]">{text}</div>
+    </div>
+  );
+}
+
+function AdmissionCalendarPage() {
+  return (
+    <div className="calendar-page report-page bg-[#fffdf8] p-6 print:p-4">
+      <section className="overflow-hidden rounded-2xl border border-[#d9cdb8] bg-[#fffdf8] shadow-md print:shadow-none">
+        <div className="bg-[#061a31] px-8 py-8 text-center text-white print:px-6 print:py-6">
+          <p className="text-xs font-bold tracking-[0.25em] text-[#d6ad67]">KANG&apos;S EDU LAB</p>
+          <h2 className="mt-3 text-4xl font-black text-[#d6ad67] print:text-3xl">2027학년도 입시 주요 일정</h2>
+          <p className="mt-3 text-sm font-semibold text-white/80">
+            수시·정시·전국연합학력평가 주요 일정을 한눈에 정리했습니다.
+          </p>
+        </div>
+
+        <div className="space-y-5 p-6 print:space-y-3 print:p-4">
+          <CalendarBlock title="01. 핵심 일정">
+            <CalendarRow label="9월 모의평가" value="2026.09.02(수)" />
+            <CalendarRow label="수시 원서접수" value="2026.09.07(월) ~ 09.11(금)" />
+            <CalendarRow label="대학수학능력시험" value="2026.11.19(목)" />
+            <CalendarRow label="수능 성적 발표" value="2026.12.11(금)" />
+          </CalendarBlock>
+
+          <CalendarBlock title="02. 수시 일정">
+            <CalendarRow label="수시 합격자 발표" value="2026.12.18(금)까지" />
+            <CalendarRow label="수시 등록 기간" value="2026.12.21(월) ~ 12.23(수)" />
+            <CalendarRow label="미등록 충원 합격 통보" value="2026.12.29(화)까지" />
+            <CalendarRow label="미등록 충원 등록 마감" value="2026.12.30(수)" />
+          </CalendarBlock>
+
+          <CalendarBlock title="03. 정시 일정">
+            <CalendarRow label="정시 원서접수" value="2027.01.04(월) ~ 01.07(목)" />
+            <CalendarRow label="정시 합격자 발표" value="2027.02.05(금)까지" />
+            <CalendarRow label="정시 등록 기간" value="2027.02.10(수) ~ 02.12(금)" />
+            <CalendarRow label="추가모집" value="2027.02.19(금) ~ 02.26(금)" />
+          </CalendarBlock>
+
+          <CalendarBlock title="04. 전국연합학력평가 일정">
+            <div className="grid grid-cols-2 gap-2 print:grid-cols-3">
+              <MiniSchedule month="3월" org="서울교육청" />
+              <MiniSchedule month="5월" org="경기교육청" />
+              <MiniSchedule month="6월" org="평가원" />
+              <MiniSchedule month="7월" org="인천교육청" />
+              <MiniSchedule month="9월" org="평가원" />
+              <MiniSchedule month="10월" org="서울교육청" />
+              <MiniSchedule month="11월" org="대학수학능력시험" />
+            </div>
+          </CalendarBlock>
+
+          <div className="rounded-2xl border border-[#d9cdb8] bg-[#061a31] p-7 text-center text-white print:p-5">
+            <p className="text-3xl font-black text-[#d6ad67] print:text-2xl">
+              수능 이후 웃는 사람이 진짜 승자입니다.
+            </p>
+            <p className="mt-3 text-sm font-semibold leading-7 text-white/85">
+              중간 평가는 짧게 점검하고, 마지막까지 앞만 보고 달리세요.
+              <br />
+              강성재교육연구소가 끝까지 함께하겠습니다.
+            </p>
+          </div>
+
+          <p className="text-center text-[11px] font-semibold leading-5 text-[#5f5a52]">
+            본 일정은 2027학년도 대학입학전형 주요 일정 기준이며,
+            대학별 모집요강 및 세부 일정은 반드시 최종 확인하시기 바랍니다.
+          </p>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function CalendarBlock({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section className="rounded-2xl border border-[#ded2bd] bg-[#fffaf0] p-4 print:p-3">
+      <h3 className="mb-3 text-lg font-black text-[#071d35] print:text-base">
+        <span className="text-[#8b6b35]">{title}</span>
+      </h3>
+      <div className="space-y-2">{children}</div>
+    </section>
+  );
+}
+
+function CalendarRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="grid grid-cols-[150px_1fr] overflow-hidden rounded-xl border border-[#ded2bd] bg-white print:grid-cols-[120px_1fr]">
+      <div className="bg-[#061a31] px-4 py-2 text-sm font-black text-[#d6ad67] print:text-xs">{label}</div>
+      <div className="px-4 py-2 text-sm font-black text-[#071d35] print:text-xs">{value}</div>
+    </div>
+  );
+}
+
+function MiniSchedule({ month, org }: { month: string; org: string }) {
+  return (
+    <div className="rounded-xl border border-[#ded2bd] bg-white p-3 text-center">
+      <p className="text-sm font-black text-[#8b6b35]">{month}</p>
+      <p className="mt-1 text-sm font-black text-[#071d35]">{org}</p>
     </div>
   );
 }

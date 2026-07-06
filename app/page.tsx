@@ -326,7 +326,7 @@ export default function HomePage() {
             <Input label="학부모 전화번호" value={parentPhone} setValue={setParentPhone} placeholder="010-0000-0000" />
             <Input label="소개자" value={referral} setValue={setReferral} placeholder="소개자 이름 또는 경로" />
 
-            <Input label="졸업년도" value={graduationYear} setValue={setGraduationYear} placeholder="예) 2026" />
+            <Input label="졸업년도" value={graduationYear} setValue={setGraduationYear} placeholder="예) 2027" />
             <Select label="계열" value={track} setValue={setTrack} options={["인문", "자연", "예체능"]} />
             <Select label="학교유형" value={schoolType} setValue={setSchoolType} options={["일반고", "자사고", "특목고", "특성화고", "기타"]} />
 
