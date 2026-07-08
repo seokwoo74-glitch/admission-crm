@@ -563,7 +563,7 @@ function AdmissionCalendarPage() {
               <CalendarRow label="수능 성적 발표" value="2026.12.11(금)" />
             </CalendarBlock>
 
-            <CalendarBlock title="04. 전국연합학력평가 일정">
+            <CalendarBlock title="02. 전국연합학력평가 일정">
               <CalendarRow label="3월 전국연합" value="2026.03.24(화)" />
               <CalendarRow label="5월 전국연합" value="2026.05.07(목)" />
               <CalendarRow label="6월 모의평가" value="2026.06.04(목)" />
@@ -574,14 +574,14 @@ function AdmissionCalendarPage() {
               <CalendarRow label="대학수학능력시험" value="2026.11.19(목)" />
             </CalendarBlock>
 
-            <CalendarBlock title="02. 수시 일정">
+            <CalendarBlock title="03. 수시 일정">
               <CalendarRow label="수시 합격자 발표" value="2026.12.18(금)까지" />
               <CalendarRow label="수시 등록 기간" value="2026.12.21(월) ~ 12.23(수)" />
               <CalendarRow label="미등록 충원 합격 통보" value="2026.12.29(화)까지" />
               <CalendarRow label="미등록 충원 등록 마감" value="2026.12.30(수)" />
             </CalendarBlock>
 
-            <CalendarBlock title="03. 정시 일정">
+            <CalendarBlock title="04. 정시 일정">
               <CalendarRow label="정시 원서접수" value="2027.01.04(월) ~ 01.07(목)" />
               <CalendarRow label="정시 합격자 발표" value="2027.02.05(금)까지" />
               <CalendarRow label="정시 등록 기간" value="2027.02.10(수) ~ 02.12(금)" />
