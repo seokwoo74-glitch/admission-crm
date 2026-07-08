@@ -711,3 +711,33 @@ function AdmissionCalendarPage() {
     </div>
   );
 }
+
+function CalendarBlock({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="rounded-2xl border border-[#ded2bd] bg-[#fffaf0] p-4 print:p-3">
+      <h3 className="mb-3 text-lg font-black text-[#071d35] print:text-base">
+        <span className="text-[#8b6b35]">{title}</span>
+      </h3>
+      <div className="space-y-2">{children}</div>
+    </section>
+  );
+}
+
+function CalendarRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="grid grid-cols-[150px_1fr] overflow-hidden rounded-xl border border-[#ded2bd] bg-white print:grid-cols-[120px_1fr]">
+      <div className="bg-[#061a31] px-4 py-2 text-sm font-black text-[#d6ad67] print:text-xs">
+        {label}
+      </div>
+      <div className="px-4 py-2 text-sm font-black text-[#071d35] print:text-xs">
+        {value}
+      </div>
+    </div>
+  );
+}
