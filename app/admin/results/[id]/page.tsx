@@ -539,7 +539,6 @@ function AdmissionCalendarPage() {
   return (
     <div className="calendar-page report-page bg-[#fffdf8] p-6 print:p-4">
       <section className="overflow-hidden rounded-2xl border border-[#d9cdb8] bg-[#fffdf8] shadow-md print:shadow-none">
-
         <div className="bg-[#061a31] px-8 py-8 text-center text-white print:px-6 print:py-6">
           <p className="text-xs font-bold tracking-[0.25em] text-[#d6ad67]">
             KANG&apos;S EDU LAB
@@ -555,138 +554,42 @@ function AdmissionCalendarPage() {
         </div>
 
         <div className="space-y-5 p-6 print:space-y-3 print:p-4">
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-2 print:grid-cols-2 print:gap-3">
+            <CalendarBlock title="01. 핵심 일정">
+              <CalendarRow label="수능 원서접수" value="2026.08.24(월) ~ 09.04(금)" />
+              <CalendarRow label="9월 모의평가" value="2026.09.02(수)" />
+              <CalendarRow label="수시 원서접수" value="2026.09.07(월) ~ 09.11(금)" />
+              <CalendarRow label="대학수학능력시험" value="2026.11.19(목)" />
+              <CalendarRow label="수능 성적 발표" value="2026.12.11(금)" />
+            </CalendarBlock>
 
-          {/* 핵심 일정 */}
+            <CalendarBlock title="04. 전국연합학력평가 일정">
+              <CalendarRow label="3월 전국연합" value="2026.03.24(화)" />
+              <CalendarRow label="5월 전국연합" value="2026.05.07(목)" />
+              <CalendarRow label="6월 모의평가" value="2026.06.04(목)" />
+              <CalendarRow label="7월 전국연합" value="2026.07.08(수)" />
+              <CalendarRow label="사관학교·경찰대" value="2026.08.01(토) 1차시험" />
+              <CalendarRow label="9월 모의평가" value="2026.09.02(수)" />
+              <CalendarRow label="10월 전국연합" value="2026.10.20(화)" />
+              <CalendarRow label="대학수학능력시험" value="2026.11.19(목)" />
+            </CalendarBlock>
 
-          <CalendarBlock title="01. 핵심 일정">
+            <CalendarBlock title="02. 수시 일정">
+              <CalendarRow label="수시 합격자 발표" value="2026.12.18(금)까지" />
+              <CalendarRow label="수시 등록 기간" value="2026.12.21(월) ~ 12.23(수)" />
+              <CalendarRow label="미등록 충원 합격 통보" value="2026.12.29(화)까지" />
+              <CalendarRow label="미등록 충원 등록 마감" value="2026.12.30(수)" />
+            </CalendarBlock>
 
-            <CalendarRow
-              label="수능 원서접수"
-              value="2026.08.24(월) ~ 09.04(금)"
-            />
-
-            <CalendarRow
-              label="9월 모의평가"
-              value="2026.09.02(수)"
-            />
-
-            <CalendarRow
-              label="수시 원서접수"
-              value="2026.09.07(월) ~ 09.11(금)"
-            />
-
-            <CalendarRow
-              label="대학수학능력시험"
-              value="2026.11.19(목)"
-            />
-
-            <CalendarRow
-              label="수능 성적 발표"
-              value="2026.12.11(금)"
-            />
-
-          </CalendarBlock>
-
-          {/* 수시 */}
-
-          <CalendarBlock title="02. 수시 일정">
-
-            <CalendarRow
-              label="수시 합격자 발표"
-              value="2026.12.18(금)까지"
-            />
-
-            <CalendarRow
-              label="수시 등록 기간"
-              value="2026.12.21(월) ~ 12.23(수)"
-            />
-
-            <CalendarRow
-              label="미등록 충원 합격 통보"
-              value="2026.12.29(화)까지"
-            />
-
-            <CalendarRow
-              label="미등록 충원 등록 마감"
-              value="2026.12.30(수)"
-            />
-
-          </CalendarBlock>
-
-          {/* 정시 */}
-
-          <CalendarBlock title="03. 정시 일정">
-
-            <CalendarRow
-              label="정시 원서접수"
-              value="2027.01.04(월) ~ 01.07(목)"
-            />
-
-            <CalendarRow
-              label="정시 합격자 발표"
-              value="2027.02.05(금)까지"
-            />
-
-            <CalendarRow
-              label="정시 등록 기간"
-              value="2027.02.10(수) ~ 02.12(금)"
-            />
-
-            <CalendarRow
-              label="추가모집"
-              value="2027.02.19(금) ~ 02.26(금)"
-            />
-
-          </CalendarBlock>
-
-          {/* 전국연합 */}
-
-          <CalendarBlock title="04. 전국연합학력평가 일정">
-
-            <CalendarRow
-              label="3월 전국연합"
-              value="2026.03.24(화)"
-            />
-
-            <CalendarRow
-              label="5월 전국연합"
-              value="2026.05.07(목)"
-            />
-
-            <CalendarRow
-              label="6월 모의평가"
-              value="2026.06.04(목)"
-            />
-
-            <CalendarRow
-              label="7월 전국연합"
-              value="2026.07.08(수)"
-            />
-
-            <CalendarRow
-              label="사관학교·경찰대"
-              value="2026.08.01(토) 1차시험"
-            />
-
-            <CalendarRow
-              label="9월 모의평가"
-              value="2026.09.02(수)"
-            />
-
-            <CalendarRow
-              label="10월 전국연합"
-              value="2026.10.20(화)"
-            />
-
-            <CalendarRow
-              label="대학수학능력시험"
-              value="2026.11.19(목)"
-            />
-
-          </CalendarBlock>
+            <CalendarBlock title="03. 정시 일정">
+              <CalendarRow label="정시 원서접수" value="2027.01.04(월) ~ 01.07(목)" />
+              <CalendarRow label="정시 합격자 발표" value="2027.02.05(금)까지" />
+              <CalendarRow label="정시 등록 기간" value="2027.02.10(수) ~ 02.12(금)" />
+              <CalendarRow label="추가모집" value="2027.02.19(금) ~ 02.26(금)" />
+            </CalendarBlock>
+          </div>
 
           <div className="rounded-2xl border border-[#d9cdb8] bg-[#061a31] p-7 text-center text-white print:p-5">
-
             <p className="text-3xl font-black text-[#d6ad67] print:text-2xl">
               수능 이후 웃는 사람이 진짜 승자입니다.
             </p>
@@ -697,16 +600,13 @@ function AdmissionCalendarPage() {
               <br />
               강성재교육연구소가 끝까지 함께하겠습니다.
             </p>
-
           </div>
 
           <p className="text-center text-[11px] font-semibold leading-5 text-[#5f5a52]">
             본 일정은 2027학년도 대학입학전형 주요 일정 기준이며,
             대학별 모집요강 및 세부 일정은 반드시 최종 확인하시기 바랍니다.
           </p>
-
         </div>
-
       </section>
     </div>
   );
@@ -720,22 +620,22 @@ function CalendarBlock({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-2xl border border-[#ded2bd] bg-[#fffaf0] p-4 print:p-3">
+    <section className="flex h-full flex-col rounded-2xl border border-[#ded2bd] bg-[#fffaf0] p-4 print:p-3">
       <h3 className="mb-3 text-lg font-black text-[#071d35] print:text-base">
         <span className="text-[#8b6b35]">{title}</span>
       </h3>
-      <div className="space-y-2">{children}</div>
+      <div className="flex flex-1 flex-col gap-2">{children}</div>
     </section>
   );
 }
 
 function CalendarRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="grid grid-cols-[150px_1fr] overflow-hidden rounded-xl border border-[#ded2bd] bg-white print:grid-cols-[120px_1fr]">
-      <div className="bg-[#061a31] px-4 py-2 text-sm font-black text-[#d6ad67] print:text-xs">
+    <div className="grid grid-cols-[118px_1fr] overflow-hidden rounded-xl border border-[#ded2bd] bg-white print:grid-cols-[96px_1fr]">
+      <div className="flex items-center bg-[#061a31] px-3 py-2 text-xs font-black text-[#d6ad67] print:px-2 print:py-1.5 print:text-[10px]">
         {label}
       </div>
-      <div className="px-4 py-2 text-sm font-black text-[#071d35] print:text-xs">
+      <div className="flex items-center justify-end px-3 py-2 text-right text-xs font-black text-[#071d35] print:px-2 print:py-1.5 print:text-[10px]">
         {value}
       </div>
     </div>
