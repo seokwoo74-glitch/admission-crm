@@ -270,7 +270,7 @@ export default function ResultPage() {
                   결과 보고서
                 </h1>
                 <p className="mt-5 max-w-xl text-sm font-semibold leading-7 text-white/90 print:text-xs">
-                  학생의 성적, 희망 대학, 전형 방향을 종합하여 정리한 맞춤형 입시 전략 리포트입니다.
+                  문의전화: 010-2130-3797
                 </p>
               </div>
 
